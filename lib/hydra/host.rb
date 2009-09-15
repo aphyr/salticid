@@ -24,20 +24,16 @@ class Hydra::Host
 
   # Download a file to the local host. Local defaults to remote if not
   # specified.
-  def download(remote, local = nil, opts = {})
+  def download(remote, local=nil, opts = {})
     local ||= remote
-    if tunnel
-      tunnel.open(name, 22) do |local_port|
-        Net::SCP.download!("localhost:#{local_port}", user, local, remote, opts)
-      end
-    else
-      Net::SCP.download!(name, user, local, remote, opts)
-    end
+    puts "downloading #{remote} to #{local}"
+    ssh.scp.download!(remote, local, opts)
   end
 
   # Runs a remote command.
   def exec!(*args)
     response = ssh.exec! *args
+    puts response
     response
   end
 
@@ -81,7 +77,6 @@ class Hydra::Host
     if task = resolve_task(meth)
       task.run(self, *args)
     else
-      raise NoMethodError, "#{meth.inspect}"
       str = ([meth] + args.map{|a| escape(a)}).join(' ')
       exec! str
     end
@@ -99,6 +94,11 @@ class Hydra::Host
       end
     end
     nil
+  end
+
+  # Removes a remote file
+  def rm(path, rf=false)
+    
   end
 
   # Assigns roles to a host from the Hydra. Roles are unique in hosts; repeat
@@ -127,7 +127,7 @@ class Hydra::Host
 
   # Opens an SSH tunnel and stores the connection in @ssh.
   def ssh
-    if @ssh and @ssh.open?
+    if @ssh and not @ssh.closed?
       return @ssh
     end
 
@@ -185,15 +185,9 @@ class Hydra::Host
   end
 
   # Upload a file to the server. Remote defaults to local if not specified.
-  def upload(local, remote = nil, options = {})
+  def upload(local, remote = nil, opts={})
     remote ||= local
-    if tunnel
-      tunnel.open(name, 22) do |local_port|
-        Net::SCP.upload!("localhost:#{local_port}", user, local, remote, opts)
-      end
-    else
-      Net::SCP.upload!(name, user, local, remote, opts)
-    end
+    ssh.scp.upload!(local, remote, opts)
   end
 
   def user(user = nil)

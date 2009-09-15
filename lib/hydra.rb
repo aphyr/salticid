@@ -1,5 +1,6 @@
 require 'rubygems'
 require 'net/ssh'
+require 'net/scp'
 require 'net/ssh/gateway'
 
 $LOAD_PATH.unshift(File.dirname(__FILE__))
