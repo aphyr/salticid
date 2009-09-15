@@ -72,20 +72,6 @@ class Hydra
     role
   end
  
-  # Yields or returns an SSH connection to the given Host.
-  def ssh(host, opts = {})
-    if gw = opts[:through] or gw = @gw
-      @gateway ||= Net::SSH::Gateway.new(gw.name, gw.user)
-      if block_given?
-        @gateway.ssh(host.name, host.user) do |ssh|
-          yield ssh
-        end
-      else
-        @gateway.ssh(host.name, host.user)
-      end
-    end
-  end
-
   # Finds (and optionally defines) a task.
   # task :foo => returns a Task
   # task :foo do ... end => defines a Task with given block

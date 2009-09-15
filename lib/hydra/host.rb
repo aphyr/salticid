@@ -26,14 +26,18 @@ class Hydra::Host
   # specified.
   def download(remote, local = nil, opts = {})
     local ||= remote
-    gw.open(name, 22) do |local_port|
-      Net::SCP.download!("localhost:#{local_port}", user, local, remote, opts)
+    if tunnel
+      tunnel.open(name, 22) do |local_port|
+        Net::SCP.download!("localhost:#{local_port}", user, local, remote, opts)
+      end
+    else
+      Net::SCP.download!(name, user, local, remote, opts)
     end
   end
 
   # Runs a remote command.
   def exec!(*args)
-    response = @ssh.exec! *args
+    response = ssh.exec! *args
     response
   end
 
@@ -83,26 +87,6 @@ class Hydra::Host
     end
   end
 
-  # Opens a shell.
-  def shell(&block)
-    ssh.shell do |sh|
-      sh.instance_exec(&block)
-    end
-  end
-
-  # Opens an SSH tunnel and stores the connection in @ssh.
-  def ssh
-    if @ssh
-      if @ssh.open?
-        return @ssh
-      else
-        @ssh.close
-        @ssh = @hydra.ssh self
-      end
-    else
-      @ssh = @hydra.ssh self
-    end
-  end
 
   # Finds a task for this host, by name.
   def resolve_task(name)
@@ -127,11 +111,30 @@ class Hydra::Host
   # Tasks are run in the order given.
   # Tasks are run with this host as context.
   def run(*task_names)
-    ssh do
-      task_names.each do |name|
-        task = resolve_task(name) or raise RuntimeError, "no such task #{name} on #{self}"
-        task.run(self)
-      end
+    ssh
+    task_names.each do |name|
+      task = resolve_task(name) or raise RuntimeError, "no such task #{name} on #{self}"
+      task.run(self)
+    end
+  end
+
+  # Opens a shell.
+  def shell(&block)
+    ssh.shell do |sh|
+      sh.instance_exec(&block)
+    end
+  end
+
+  # Opens an SSH tunnel and stores the connection in @ssh.
+  def ssh
+    if @ssh and @ssh.open?
+      return @ssh
+    end
+
+    if tunnel
+      @ssh = tunnel.ssh(name, user)
+    else
+      @ssh = Net::SSH.start(name, user)
     end
   end
 
@@ -173,11 +176,23 @@ class Hydra::Host
     @name.to_s
   end
 
+  # Returns an SSH::Gateway object for connecting to this host, or nil if
+  # no gateway is configured.
+  def tunnel
+    if gw
+      @tunnel ||= Net::SSH::Gateway.new(gw.name, gw.user)
+    end
+  end
+
   # Upload a file to the server. Remote defaults to local if not specified.
   def upload(local, remote = nil, options = {})
     remote ||= local
-    gw.open(name, 22) do |local_port|
-      Net::SCP.upload!("localhost:#{local_port}", user, local, remote, opts)
+    if tunnel
+      tunnel.open(name, 22) do |local_port|
+        Net::SCP.upload!("localhost:#{local_port}", user, local, remote, opts)
+      end
+    else
+      Net::SCP.upload!(name, user, local, remote, opts)
     end
   end
 
