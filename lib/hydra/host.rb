@@ -22,6 +22,15 @@ class Hydra::Host
     ftype(path) == :directory rescue false
   end
 
+  # Download a file to the local host. Local defaults to remote if not
+  # specified.
+  def download(remote, local = nil, opts = {})
+    local ||= remote
+    gw.open(name, 22) do |local_port|
+      Net::SCP.download!("localhost:#{local_port}", user, local, remote, opts)
+    end
+  end
+
   # Runs a remote command.
   def exec!(*args)
     response = @ssh.exec! *args
@@ -52,6 +61,11 @@ class Hydra::Host
     end
   end
 
+  # Returns the gateway for this host.
+  def gw
+    @hydra.gw
+  end
+
   def inspect
     "#<#{@user}@#{@name} roles=#{@roles.inspect} tasks=#{@tasks.inspect}>"
   end
@@ -63,6 +77,7 @@ class Hydra::Host
     if task = resolve_task(meth)
       task.run(self, *args)
     else
+      raise NoMethodError, "#{meth.inspect}"
       str = ([meth] + args.map{|a| escape(a)}).join(' ')
       exec! str
     end
@@ -156,6 +171,14 @@ class Hydra::Host
 
   def to_s
     @name.to_s
+  end
+
+  # Upload a file to the server. Remote defaults to local if not specified.
+  def upload(local, remote = nil, options = {})
+    remote ||= local
+    gw.open(name, 22) do |local_port|
+      Net::SCP.upload!("localhost:#{local_port}", user, local, remote, opts)
+    end
   end
 
   def user(user = nil)
