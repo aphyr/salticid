@@ -1,0 +1,3 @@
+[submodule "lib/net-ssh-shell"]
+	path = lib/net-ssh-shell
+	url = git://github.com/jamis/net-ssh-shell.git

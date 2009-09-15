@@ -1,0 +1,105 @@
+require 'rubygems'
+require 'net/ssh'
+require 'net/ssh/gateway'
+
+$LOAD_PATH.unshift(File.dirname(__FILE__))
+
+class Hydra
+  $LOAD_PATH.unshift(File.join(File.dirname(__FILE__), 'net-ssh-shell', 'lib'))
+  require 'net/ssh/shell'
+  require 'snippets/instance_exec'
+  require 'hydra/task'
+  require 'hydra/role'
+  require 'hydra/host'
+
+  attr_accessor :gw, :hosts, :roles, :tasks
+
+  def initialize
+    @gw = nil
+    @hosts = []
+    @roles = []
+    @tasks = []
+  end
+
+  # Default SSH gateway.
+  def gw(name = nil, &block)
+    # Get gateway from cache or set new one.
+    if name
+      # Set gateway
+      @gw = Hydra::Host.new(name, :hydra => self)
+    end
+
+    if block_given?
+      @gw.instance_exec &block
+    end
+
+    @gw
+  end
+
+  def host(name, &block)
+    unless host = @hosts.find{|h| h.name == name}
+      host = Hydra::Host.new(name, :hydra => self)
+      @hosts << host
+    end
+
+    if block_given?
+      host.instance_exec &block
+    end
+
+    host
+  end
+
+  # Loads one or more file globs into the current hydra.
+  def load(*globs)
+    globs.each do |glob|
+      Dir.glob(glob).each do |path|
+        instance_eval(File.read(path), path)
+      end
+    end
+  end
+
+  # Defines a new role. A role is a package of tasks.
+  def role(name, &block)
+    unless role = @roles.find{|r| r.name == name}
+      role = Hydra::Role.new(name, :hydra => self)
+      @roles << role
+    end
+
+    if block_given?
+      role.instance_eval &block
+    end
+
+    role
+  end
+ 
+  # Yields or returns an SSH connection to the given Host.
+  def ssh(host, opts = {})
+    if gw = opts[:through] or gw = @gw
+      @gateway ||= Net::SSH::Gateway.new(gw.name, gw.user)
+      if block_given?
+        @gateway.ssh(host.name, host.user) do |ssh|
+          yield ssh
+        end
+      else
+        @gateway.ssh(host.name, host.user)
+      end
+    end
+  end
+
+  # Finds (and optionally defines) a task.
+  # task :foo => returns a Task
+  # task :foo do ... end => defines a Task with given block
+  def task(name, &block)
+    unless task = @tasks.find{|t| t.name == name}
+      task = Hydra::Task.new(name, :hydra => self)
+      @tasks << task
+    end
+  
+    if block_given?
+      task.block = block
+    end
+
+    task 
+  end
+
+end

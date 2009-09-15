@@ -1,0 +1,13 @@
+Hydra
+=====
+
+Hydra is a build system for administering servers. It is designed to run froma  central, trusted distribution server, and uses SSH+sudo to update various production server aspects.
+
+Will support
+------------
+  - Firewall configuration
+  - Haproxy, Nginx, Monit configuration
+  - Apt-get updates
+  - Gem requirements
+  - SVN deploys
+  - Git deploys

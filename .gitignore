@@ -1,0 +1,8 @@
+pkg/
+log/
+._*
+.*.swp
+*~
+.DS_Store
+*.gemspec
+/test
