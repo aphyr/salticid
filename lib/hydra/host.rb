@@ -12,9 +12,14 @@ class Hydra::Host
     self.name == other.name
   end
 
-  # Quotes a string for inclusion in a bash command line
-  def escape(string)
-    '"' + string.to_s.gsub(/[\\\$`"]/) { |match| '\\' + match } + '"'
+  # Changes the mode of a file. Mode is numeric.
+  def chmod
+    chmod mode.to_s(8), path
+  end
+
+  # Changes the mode of a file, recursively. Mode is numeric.
+  def chmod_r(mode, path)
+    chmod '-R', mode.to_s(8), path
   end
 
   # Returns true if a directory exists
@@ -30,6 +35,11 @@ class Hydra::Host
     ssh.scp.download!(remote, local, opts)
   end
 
+  # Quotes a string for inclusion in a bash command line
+  def escape(string)
+    '"' + string.to_s.gsub(/[\\\$`"]/) { |match| '\\' + match } + '"'
+  end
+  
   # Runs a remote command.
   def exec!(*args)
     response = ssh.exec! *args
