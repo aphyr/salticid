@@ -19,7 +19,7 @@ class Hydra::Host
 
   # Returns true if a directory exists
   def dir?(path)
-    ftype(path) == :directory rescue false
+    ftype(path) == 'directory' rescue false
   end
 
   # Download a file to the local host. Local defaults to remote if not
@@ -33,7 +33,6 @@ class Hydra::Host
   # Runs a remote command.
   def exec!(*args)
     response = ssh.exec! *args
-    puts response
     response
   end
 
@@ -44,20 +43,31 @@ class Hydra::Host
 
   # Returns true if a regular file exists.
   def file?(path)
-    ftype(path) == :file rescue false
+    ftype(path) == 'file' rescue false
   end
 
-  # Returns the filetype, as symbol. Raises exceptions on failed stat.
+  # Returns the filetype, as string. Raises exceptions on failed stat.
   def ftype(path)
-    stat = self.stat path
-    begin
-      stat.split("\n")[1].split(/\s+/).last.to_sym
-    rescue
-      if stat =~ /no such file or directory/i
-        raise Errno::ENOENT, "#{self}:#{path} does not exist"
-      else
-        raise RuntimeError, "stat #{self}:#{path} failed - #{stat}"
-      end
+    str = self.stat('-c', '%F', path).strip
+    case str
+    when /no such file or directory/i
+      raise Errno::ENOENT, "#{self}:#{path} does not exist"
+    when 'regular file'
+      'file'
+    when 'directory'
+      'directory'
+    when 'character special file'
+      'characterSpecial'
+    when 'block special file'
+      'blockSpecial'
+    when /link/
+      'link'
+    when /socket/
+      'socket'
+    when /fifo|pipe/
+      'fifo'
+    else
+      raise RuntimeError, "stat #{self}:#{path} failed - #{stat}"
     end
   end
 
@@ -82,6 +92,10 @@ class Hydra::Host
     end
   end
 
+  # Returns the file mode of a remote file.
+  def mode(path)
+    stat('-c', '%a', path).oct
+  end
 
   # Finds a task for this host, by name.
   def resolve_task(name)
@@ -98,7 +112,6 @@ class Hydra::Host
 
   # Removes a remote file
   def rm(path, rf=false)
-    
   end
 
   # Assigns roles to a host from the Hydra. Roles are unique in hosts; repeat
@@ -136,6 +149,35 @@ class Hydra::Host
     else
       @ssh = Net::SSH.start(name, user)
     end
+  end
+
+  # Uploads a file and places it in the final destination as root.
+  # If the file already exists, its ownership and mode are used for
+  # the replacement.
+  def sudo_upload(local, remote, opts={})
+    # TODO: umask this?
+    local_mode = File.stat(local).mode
+    File.chmod 0600, local
+    
+    # Get temporary filename
+    tmpfile = '/'
+    while exists? tmpfile
+      tmpfile = '/tmp/sudo_upload_' + Time.now.to_f.to_s
+    end
+
+    # Upload
+    upload local, tmpfile, opts
+
+    # Get remote mode
+    if exists? remote
+      mode = self.mode remote
+    else
+      mode = local_mode
+    end 
+
+    # Move and chmod
+    sudo 'mv', tmpfile, remote
+    sudo 'chmod', '-R', mode.to_s(8), remote
   end
 
   # Finds (and optionally defines) a task.
