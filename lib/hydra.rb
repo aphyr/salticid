@@ -54,6 +54,7 @@ class Hydra
   def load(*globs)
     globs.each do |glob|
       Dir.glob(glob).each do |path|
+        next unless File.file? path
         instance_eval(File.read(path), path)
       end
     end
