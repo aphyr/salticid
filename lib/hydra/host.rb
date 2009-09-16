@@ -31,7 +31,6 @@ class Hydra::Host
   # specified.
   def download(remote, local=nil, opts = {})
     local ||= remote
-    puts "downloading #{remote} to #{local}"
     ssh.scp.download!(remote, local, opts)
   end
 
@@ -178,16 +177,21 @@ class Hydra::Host
     # Upload
     upload local, tmpfile, opts
 
-    # Get remote mode
+    # Get remote mode/user/group
     if exists? remote
       mode = self.mode remote
+      user = sudo('stat', '-c', '%U', remote).strip
+      group = sudo('stat', '-c', '%G', remote).strip
     else
+      user = 'root'
+      group = 'root'
       mode = local_mode
-    end 
+    end
 
     # Move and chmod
     sudo 'mv', tmpfile, remote
-    sudo 'chmod', '-R', mode.to_s(8), remote
+    sudo 'chmod', mode.to_s(8), remote
+    sudo 'chown', "#{user}:#{group}", remote
   end
 
   # Finds (and optionally defines) a task.
