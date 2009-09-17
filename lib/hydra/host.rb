@@ -40,8 +40,13 @@ class Hydra::Host
   end
   
   # Runs a remote command.
-  def exec!(*args)
-    response = ssh.exec! *args
+  def exec!(*args) 
+    if @shell
+      # Run in shell
+      response = @shell.execute! *args
+    else
+      response = ssh.exec! *args
+    end
     response
   end
 
@@ -140,10 +145,11 @@ class Hydra::Host
     end
   end
 
-  # Opens a shell.
+  # Opens a shell. Subsequent exec! commands are interpreted by the shell.
   def shell(&block)
-    ssh.shell do |sh|
-      sh.instance_exec(&block)
+    ssh.shell do |shell|
+      @shell = shell
+      instance_exec(&block)
     end
   end
 
