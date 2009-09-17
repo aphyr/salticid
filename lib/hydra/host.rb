@@ -1,6 +1,8 @@
 class Hydra::Host
   SKIP_BEFORE_CMDS = [
-    /^cd /
+    /^cd\b/,
+    /^pwd\b/,
+    /^sudo /
   ]
 
   attr_accessor :name, :user, :roles, :tasks, :hydra
@@ -24,12 +26,22 @@ class Hydra::Host
     if user.nil?
       @before_cmds = ["sudo"]
     else
+      old_user, @user = @user, user
       @before_cmds = ["sudo -u #{escape(user)}"]
     end
 
     yield
 
+    @user = old_user
     @before_cmds = old_cmds
+  end
+
+  # Changes our working directory.
+  def cd(dir = nil)
+    dir ||= homedir
+    dir = expand_path(dir)
+    exec! "cd #{escape(dir)}"
+    @cwd = dir
   end
 
   # Changes the mode of a file. Mode is numeric.
@@ -42,20 +54,37 @@ class Hydra::Host
     chmod '-R', mode.to_s(8), path
   end
 
+  # Returns our idea of what the current working directory is.
+  # If @cwd has not been set (i.e. by cd(),) exec!('pwd') is used.
+  def cwd
+    begin
+      @cwd ||= self.pwd.strip
+    rescue
+      @cwd
+    end
+  end
+
   # Returns true if a directory exists
   def dir?(path)
-    ftype(path) == 'directory' rescue false
+    begin
+      ftype(path) == 'directory'
+    rescue
+      false
+    end
   end
 
   # Download a file to the local host. Local defaults to remote if not
   # specified.
   def download(remote, local=nil, opts = {})
     local ||= remote
+    remote = expand_path remote
     ssh.scp.download!(remote, local, opts)
   end
 
   # Quotes a string for inclusion in a bash command line
   def escape(string)
+    return '' if string.nil?
+    return string unless string.to_s =~ /[\\\$`"]/
     '"' + string.to_s.gsub(/[\\\$`"]/) { |match| '\\' + match } + '"'
   end
   
@@ -69,11 +98,10 @@ class Hydra::Host
       # Run in shell
       status, output = @shell.exec! command
       raise RuntimeError, "#{command} returned non-zero exit status #{status}:\n#{output}" if status != 0
-      output
+      output.chomp
     else
-      response = ssh.exec! *args
+      output = ssh.exec! *args
     end
-    response
   end
 
   # Returns true when a file exists, otherwise false
@@ -81,6 +109,12 @@ class Hydra::Host
     true if ftype(path) rescue false
   end
 
+  # Generates a full path for the given remote path.
+  def expand_path(path)
+    path = path.gsub(/~(\w+)?/) { |m| homedir($1) }
+    File.expand_path(path, cwd.to_s)
+  end
+  
   # Returns true if a regular file exists.
   def file?(path)
     ftype(path) == 'file' rescue false
@@ -88,34 +122,46 @@ class Hydra::Host
 
   # Returns the filetype, as string. Raises exceptions on failed stat.
   def ftype(path)
-    str = self.stat('-c', '%F', path).strip
-    case str
-    when /no such file or directory/i
-      raise Errno::ENOENT, "#{self}:#{path} does not exist"
-    when 'regular file'
-      'file'
-    when 'directory'
-      'directory'
-    when 'character special file'
-      'characterSpecial'
-    when 'block special file'
-      'blockSpecial'
-    when /link/
-      'link'
-    when /socket/
-      'socket'
-    when /fifo|pipe/
-      'fifo'
-    else
-      raise RuntimeError, "stat #{self}:#{path} failed - #{stat}"
+    path = expand_path(path)
+    begin
+      str = self.stat('-c', '%F', path).strip
+      case str
+      when /no such file or directory/i
+        raise Errno::ENOENT, "#{self}:#{path} does not exist"
+      when 'regular file'
+        'file'
+      when 'directory'
+        'directory'
+      when 'character special file'
+        'characterSpecial'
+      when 'block special file'
+        'blockSpecial'
+      when /link/
+        'link'
+      when /socket/
+        'socket'
+      when /fifo|pipe/
+        'fifo'
+      else
+        raise RuntimeError, "unknown filetype #{str}"
+      end
+    rescue
+      raise RuntimeError, "stat #{self}:#{path} failed - #{str}"
     end
   end
+
 
   # Returns the gateway for this host.
   def gw
     @hydra.gw
   end
 
+  # Returns the home directory of the given user, or the current user if
+  # none specified.
+  def homedir(user = @user)
+    exec! "awk -F: -v v=#{escape(user)} '{if ($1==v) print $6}' /etc/passwd"
+  end
+ 
   def inspect
     "#<#{@user}@#{@name} roles=#{@roles.inspect} tasks=#{@tasks.inspect}>"
   end
@@ -139,6 +185,7 @@ class Hydra::Host
 
   # Finds a task for this host, by name.
   def resolve_task(name)
+    name = name.to_sym
     @tasks.each do |task|
       return task if task.name == name
     end
@@ -146,6 +193,9 @@ class Hydra::Host
       role.tasks.each do |task|
         return task if task.name == name
       end
+    end
+    @hydra.tasks.each do |task|
+      return task if task.name == name
     end
     nil
   end
@@ -175,6 +225,7 @@ class Hydra::Host
   def shell(&block)
     ssh.shell do |shell|
       old_shell, @shell = @shell, shell
+      shell.execute! "cd #{escape(cwd)}"
       instance_exec(&block)
       @shell = old_shell
     end
@@ -203,10 +254,12 @@ class Hydra::Host
 
   # Uploads a file and places it in the final destination as root.
   # If the file already exists, its ownership and mode are used for
-  # the replacement.
+  # the replacement. Otherwise it inherits ownership from the parent directory.
   def sudo_upload(local, remote, opts={})
+    remote = expand_path remote
+
     # TODO: umask this?
-    local_mode = File.stat(local).mode
+    local_mode = File.stat(local).mode & 07777
     File.chmod 0600, local
     
     # Get temporary filename
@@ -224,8 +277,8 @@ class Hydra::Host
       user = sudo('stat', '-c', '%U', remote).strip
       group = sudo('stat', '-c', '%G', remote).strip
     else
-      user = 'root'
-      group = 'root'
+      user = sudo('stat', '-c', '%U', File.dirname(remote)).strip
+      group = sudo('stat', '-c', '%G', File.dirname(remote)).strip
       mode = local_mode
     end
 
@@ -284,6 +337,7 @@ class Hydra::Host
   # Upload a file to the server. Remote defaults to local if not specified.
   def upload(local, remote = nil, opts={})
     remote ||= local
+    remote = expand_path remote
     ssh.scp.upload!(local, remote, opts)
   end
 

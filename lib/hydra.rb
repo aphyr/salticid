@@ -54,6 +54,7 @@ class Hydra
   # Loads one or more file globs into the current hydra.
   def load(*globs)
     globs.each do |glob|
+      glob += '.rb' if glob =~ /\*$/
       Dir.glob(glob).each do |path|
         next unless File.file? path
         instance_eval(File.read(path), path)
