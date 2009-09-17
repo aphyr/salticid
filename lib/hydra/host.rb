@@ -3,7 +3,6 @@ class Hydra::Host
     /^cd /
   ]
 
-
   attr_accessor :name, :user, :roles, :tasks, :hydra
   def initialize(name, opts = {})
     @name = name
@@ -62,7 +61,7 @@ class Hydra::Host
   
   # Runs a remote command.
   def exec!(command)
-    unless SKIP_BEFORE_CMDS === command.to_s
+    unless SKIP_BEFORE_CMDS.any? { |cmd| cmd  === command.to_s }
       command = (@before_cmds + [command]).join(' ')
     end
     
@@ -175,8 +174,9 @@ class Hydra::Host
   # Opens a shell. Subsequent exec! commands are interpreted by the shell.
   def shell(&block)
     ssh.shell do |shell|
-      @shell = shell
+      old_shell, @shell = @shell, shell
       instance_exec(&block)
+      @shell = old_shell
     end
   end
 
