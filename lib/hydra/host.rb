@@ -1,4 +1,9 @@
 class Hydra::Host
+  SKIP_BEFORE_CMDS = [
+    /^cd /
+  ]
+
+
   attr_accessor :name, :user, :roles, :tasks, :hydra
   def initialize(name, opts = {})
     @name = name
@@ -57,7 +62,9 @@ class Hydra::Host
   
   # Runs a remote command.
   def exec!(command)
-    command = (@before_cmds + [command]).join(' ')
+    unless SKIP_BEFORE_CMDS === command.to_s
+      command = (@before_cmds + [command]).join(' ')
+    end
     
     if @shell
       # Run in shell
