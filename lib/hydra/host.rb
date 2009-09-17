@@ -40,10 +40,12 @@ class Hydra::Host
   end
   
   # Runs a remote command.
-  def exec!(*args) 
+  def exec!(command) 
     if @shell
       # Run in shell
-      response = @shell.execute! *args
+      status, output = @shell.exec! command
+      raise RuntimeError, "#{command} returned non-zero exit status #{status}:\n#{output}" if status != 0
+      output
     else
       response = ssh.exec! *args
     end
