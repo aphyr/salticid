@@ -6,10 +6,26 @@ class Hydra::Host
     @roles = opts[:roles] || []
     @tasks = opts[:tasks] || []
     @hydra = opts[:hydra]
+    @before_cmds = []
   end
 
   def ==(other)
     self.name == other.name
+  end
+
+  # all calls to exec! within this block are prefixed by sudoing to the user.
+  def as(user = nil)
+    old_cmds = @before_cmds
+
+    if user.nil?
+      @before_cmds = ["sudo"]
+    else
+      @before_cmds = ["sudo -u #{escape(user)}"]
+    end
+
+    yield
+
+    @before_cmds = old_cmds
   end
 
   # Changes the mode of a file. Mode is numeric.
@@ -40,7 +56,9 @@ class Hydra::Host
   end
   
   # Runs a remote command.
-  def exec!(command) 
+  def exec!(command)
+    command = (@before_cmds + [command]).join(' ')
+    
     if @shell
       # Run in shell
       status, output = @shell.exec! command
@@ -165,6 +183,14 @@ class Hydra::Host
       @ssh = tunnel.ssh(name, user)
     else
       @ssh = Net::SSH.start(name, user)
+    end
+  end
+
+  def sudo(*args, &block)
+    if block_given?
+      as nil, &block
+    else
+      method_missing(:sudo, *args)
     end
   end
 
