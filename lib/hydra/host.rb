@@ -19,6 +19,25 @@ class Hydra::Host
     self.name == other.name
   end
 
+  # Appends the given string to a file.
+  def append(str, file, opts = {:uniq => false})
+    if opts[:uniq] and exists? file
+      # Check to ensure the file does not contain the line already.
+      begin
+        grep(str, file) or raise
+      rescue
+        return nil
+      end
+    end
+
+    if str =~ /EOF/
+      raise "Sorry, can't append this string, it has an EOF in it:\n#{str}"
+    end
+
+    puts "cat >>#{escape(file)} <<EOF\n#{str}EOF"
+    execute!("cat >>#{escape(file)} <<EOF\n#{str}EOF")
+  end
+
   # all calls to exec! within this block are prefixed by sudoing to the user.
   def as(user = nil)
     old_cmds = @before_cmds
@@ -45,13 +64,13 @@ class Hydra::Host
   end
 
   # Changes the mode of a file. Mode is numeric.
-  def chmod
-    chmod mode.to_s(8), path
+  def chmod(mode, path)
+    exec! "chmod #{mode.to_s(8)} #{escape(expand_path(path))}"
   end
 
   # Changes the mode of a file, recursively. Mode is numeric.
   def chmod_r(mode, path)
-    chmod '-R', mode.to_s(8), path
+    exec! "chmod -R #{mode.to_s(8)} #{escape(expand_path(path))}"
   end
 
   # Returns our idea of what the current working directory is.
@@ -93,7 +112,7 @@ class Hydra::Host
     unless SKIP_BEFORE_CMDS.any? { |cmd| cmd  === command.to_s }
       command = (@before_cmds + [command]).join(' ')
     end
-    
+  
     if @shell
       # Run in shell
       status, output = @shell.exec! command
@@ -198,10 +217,6 @@ class Hydra::Host
       return task if task.name == name
     end
     nil
-  end
-
-  # Removes a remote file
-  def rm(path, rf=false)
   end
 
   # Assigns roles to a host from the Hydra. Roles are unique in hosts; repeat
