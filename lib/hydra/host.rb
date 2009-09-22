@@ -12,6 +12,7 @@ class Hydra::Host
     @roles = opts[:roles] || []
     @tasks = opts[:tasks] || []
     @hydra = opts[:hydra]
+
     @before_cmds = []
   end
 
@@ -169,7 +170,6 @@ class Hydra::Host
     end
   end
 
-
   # Returns the gateway for this host.
   def gw
     @hydra.gw
@@ -246,7 +246,7 @@ class Hydra::Host
     end
   end
 
-  # Opens an SSH tunnel and stores the connection in @ssh.
+  # Opens an SSH connection and stores the connection in @ssh.
   def ssh
     if @ssh and not @ssh.closed?
       return @ssh
@@ -255,6 +255,7 @@ class Hydra::Host
     if tunnel
       @ssh = tunnel.ssh(name, user)
     else
+      puts "SSH #{name}, #{user}"
       @ssh = Net::SSH.start(name, user)
     end
   end
@@ -341,11 +342,12 @@ class Hydra::Host
     @name.to_s
   end
 
-  # Returns an SSH::Gateway object for connecting to this host, or nil if
-  # no gateway is configured.
+  # Returns an SSH::Gateway object for connecting to this host, or nil if no
+  # gateway is needed.
   def tunnel
     if gw
-      @tunnel ||= Net::SSH::Gateway.new(gw.name, gw.user)
+      # We have a gateway host.
+      @tunnel ||= gw.gateway_tunnel
     end
   end
 

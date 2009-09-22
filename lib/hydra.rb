@@ -13,6 +13,7 @@ class Hydra
   require 'hydra/task'
   require 'hydra/role'
   require 'hydra/host'
+  require 'hydra/gateway'
 
   attr_accessor :gw, :hosts, :roles, :tasks
 
@@ -28,7 +29,7 @@ class Hydra
     # Get gateway from cache or set new one.
     if name
       # Set gateway
-      @gw = Hydra::Host.new(name, :hydra => self)
+      @gw = Hydra::Gateway.new(name, :hydra => self)
     end
 
     if block_given?
