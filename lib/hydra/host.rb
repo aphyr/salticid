@@ -113,15 +113,14 @@ class Hydra::Host
     unless SKIP_BEFORE_CMDS.any? { |cmd| cmd  === command.to_s }
       command = (@before_cmds + [command]).join(' ')
     end
-  
-    if @shell
-      # Run in shell
-      status, output = @shell.exec! command
-      raise RuntimeError, "#{command} returned non-zero exit status #{status}:\n#{output}" if status != 0
-      output.chomp
-    else
-      output = ssh.exec! *args
-    end
+ 
+    # Create shell if none exists.
+    @shell ||= ssh.shell
+
+    # Run in shell
+    status, output = @shell.exec! command
+    raise RuntimeError, "#{command} returned non-zero exit status #{status}:\n#{output}" if status != 0
+    output.chomp
   end
 
   # Returns true when a file exists, otherwise false
