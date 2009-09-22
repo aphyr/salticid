@@ -7,8 +7,8 @@ class Hydra::Host
 
   attr_accessor :name, :user, :roles, :tasks, :hydra
   def initialize(name, opts = {})
-    @name = name
-    @user = opts[:user]
+    @name = name.to_s
+    @user = opts[:user].to_s
     @roles = opts[:roles] || []
     @tasks = opts[:tasks] || []
     @hydra = opts[:hydra]
@@ -39,7 +39,7 @@ class Hydra::Host
     execute!("cat >>#{escape(file)} <<EOF\n#{str}EOF")
   end
 
-  # all calls to exec! within this block are prefixed by sudoing to the user.
+  # All calls to exec! within this block are prefixed by sudoing to the user.
   def as(user = nil)
     old_cmds = @before_cmds
 
@@ -201,6 +201,15 @@ class Hydra::Host
     stat('-c', '%a', path).oct
   end
 
+  # Sets or gets the name of this host.
+  def name(name = nil)
+    if name
+      @name = name.to_s
+    else
+      @name
+    end
+  end
+
   # Finds a task for this host, by name.
   def resolve_task(name)
     name = name.to_sym
@@ -314,6 +323,8 @@ class Hydra::Host
   #
   # The task is returned at the end of the method.
   def task(name, &block)
+    name = name.to_s
+
     if task = @tasks.find{|t| t.name == name}
       # Found in self
     elsif (task = @hydra.tasks.find{|t| t.name == name}) and not block_given?

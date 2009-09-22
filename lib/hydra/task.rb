@@ -3,7 +3,7 @@ class Hydra::Task
   attr_accessor :name, :block
 
   def initialize(name, opts = {})
-    @name = name
+    @name = name.to_s
   end
 
   def ==(other)
@@ -19,6 +19,15 @@ class Hydra::Task
 
   def inspect
     "#<Task #{@name}>"
+  end
+
+  # Sets or gets the name of this task.
+  def name(name = nil)
+    if name
+      @name = name.to_s
+    else
+      @name
+    end
   end
 
   # Runs the task in a given context

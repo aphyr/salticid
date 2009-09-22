@@ -3,7 +3,7 @@ class Hydra::Role
   attr_reader :name, :tasks, :hydra
 
   def initialize(name, opts = {})
-    @name = name
+    @name = name.to_s
     @tasks = []
     @hydra = opts[:hydra]
   end
@@ -26,6 +26,15 @@ class Hydra::Role
     "#<Role #{name} tasks=#{@tasks.inspect}>"
   end
 
+  # Sets or gets the name of this role.
+  def name(name = nil)
+    if name
+      @name = name.to_s
+    else
+      @name
+    end
+  end
+
   # Runs all tasks in sequence, in a given context
   def run(context = nil)
     tasks.each do |task|
@@ -44,6 +53,8 @@ class Hydra::Role
   #
   # The task is returned at the end of the method.
   def task(name, &block)
+    name = name.to_s
+
     if task = @tasks.find{|t| t.name == name}
       # Found in self
     elsif (task = @hydra.tasks.find{|t| t.name == name}) and not block_given?

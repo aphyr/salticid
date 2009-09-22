@@ -40,6 +40,7 @@ class Hydra
   end
 
   def host(name, &block)
+    name = name.to_s
     unless host = @hosts.find{|h| h.name == name}
       host = Hydra::Host.new(name, :hydra => self)
       @hosts << host
@@ -65,6 +66,8 @@ class Hydra
 
   # Defines a new role. A role is a package of tasks.
   def role(name, &block)
+    name = name.to_s
+
     unless role = @roles.find{|r| r.name == name}
       role = Hydra::Role.new(name, :hydra => self)
       @roles << role
@@ -81,6 +84,8 @@ class Hydra
   # task :foo => returns a Task
   # task :foo do ... end => defines a Task with given block
   def task(name, &block)
+    name = name.to_s
+
     unless task = @tasks.find{|t| t.name == name}
       task = Hydra::Task.new(name, :hydra => self)
       @tasks << task
@@ -92,5 +97,4 @@ class Hydra
 
     task 
   end
-
 end
