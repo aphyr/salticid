@@ -3,4 +3,4 @@
 require "#{File.dirname(__FILE__)}/../lib/hydra"
 @h = Hydra.new
 @h.load 'common/**/*.rb'
-@h.load *ARGV
+@h.load ARGV.shift
