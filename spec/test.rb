@@ -82,4 +82,16 @@ describe "A Host" do
       rm 'hydra_tmp'
     end
   end
+
+  should 'run as different users via sudo' do
+    @h.host :localhost do
+      as ENV['USER'] do
+        cd '/tmp'
+        pwd.should == '/tmp'
+        exec! 'echo foo > hydra_tmp'
+        cat('hydra_tmp').should == "foo"
+        rm 'hydra_tmp'
+      end
+    end
+  end
 end

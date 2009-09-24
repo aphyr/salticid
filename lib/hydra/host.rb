@@ -1,10 +1,4 @@
 class Hydra::Host
-  SKIP_BEFORE_CMDS = [
-    /^cd\b/,
-    /^pwd\b/,
-    /^sudo /
-  ]
-
   attr_accessor :name, :user, :roles, :tasks, :hydra
   def initialize(name, opts = {})
     @name = name.to_s
@@ -12,6 +6,7 @@ class Hydra::Host
     @roles = opts[:roles] || []
     @tasks = opts[:tasks] || []
     @hydra = opts[:hydra]
+    @sudo = nil
 
     @before_cmds = []
   end
@@ -40,19 +35,9 @@ class Hydra::Host
 
   # All calls to exec! within this block are prefixed by sudoing to the user.
   def as(user = nil)
-    old_cmds = @before_cmds
-
-    if user.nil?
-      @before_cmds = ["sudo"]
-    else
-      old_user, @user = @user, user
-      @before_cmds = ["sudo -u #{escape(user)}"]
-    end
-
+    old_sudo, @sudo = @sudo, (user || 'root')
     yield
-
-    @user = old_user
-    @before_cmds = old_cmds
+    @sudo = old_sudo
   end
 
   # Changes our working directory.
@@ -116,10 +101,6 @@ class Hydra::Host
     
     opts = defaults.merge opts
 
-    unless SKIP_BEFORE_CMDS.any? { |cmd| cmd  === command.to_s }
-      command = (@before_cmds + [command]).join(' ')
-    end
- 
     # Before execution, cd to cwd
     command = "cd #{escape(cwd)}; " + command
 
@@ -130,6 +111,12 @@ class Hydra::Host
 
     # Then echo the exit status.
     command += ' echo $?; '
+
+
+    # If applicable, wrap the command in a sudo subshell...
+    if @sudo
+      command = "sudo -u #{@sudo} bash -c #{escape(command)}"
+    end
 
     buffer = ''
     status = nil
@@ -306,7 +293,7 @@ class Hydra::Host
 
   # Finds a task for this host, by name.
   def resolve_task(name)
-    name = name.to_sym
+    name = name.to_s
     @tasks.each do |task|
       return task if task.name == name
     end
@@ -351,9 +338,11 @@ class Hydra::Host
     end
   end
 
+  # If a block is given, works like #as. Otherwise, just execs sudo with the
+  # given arguments.
   def sudo(*args, &block)
     if block_given?
-      as nil, &block
+      as *args, &block
     else
       method_missing(:sudo, *args)
     end
