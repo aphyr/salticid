@@ -60,7 +60,6 @@ class Hydra::Host
   def cd(dir = nil)
     dir ||= homedir
     dir = expand_path(dir)
-    exec! "cd #{escape(dir)}"
     @cwd = dir
   end
 
@@ -75,10 +74,10 @@ class Hydra::Host
   end
 
   # Returns our idea of what the current working directory is.
-  # If @cwd has not been set (i.e. by cd(),) exec!('pwd') is used.
+  # If @cwd has not been set (i.e. by cd(),) / is used.
   def cwd
     begin
-      @cwd ||= self.pwd.strip
+      @cwd ||= '/'
     rescue
       @cwd
     end
@@ -109,18 +108,94 @@ class Hydra::Host
   end
   
   # Runs a remote command.
-  def exec!(command)
+  def exec!(command, opts = {})
+    # Options
+    stdout = ''
+    stderr = ''
+    defaults = {
+    }
+    
+    opts = defaults.merge opts
+
     unless SKIP_BEFORE_CMDS.any? { |cmd| cmd  === command.to_s }
       command = (@before_cmds + [command]).join(' ')
     end
  
-    # Create shell if none exists.
-    @shell ||= ssh.shell
+    # Before execution, cd to cwd
+    command = "cd #{escape(cwd)}; " + command
 
-    # Run in shell
-    status, output = @shell.exec! command
-    raise RuntimeError, "#{command} returned non-zero exit status #{status}:\n#{output}" if status != 0
-    output.chomp
+    # After command, add a semicolon...
+    unless command =~ /;\s*$/
+      command += ';'
+    end
+
+    # Then echo the exit status.
+    command += ' echo $?; '
+
+    buffer = ''
+    status = nil
+
+    # Run ze command with callbacks.
+    # Return status.
+    channel = ssh.open_channel do |ch|
+      ch.exec command do |ch, success|
+        raise "could not execute command" unless success
+
+        # Handle STDOUT
+        ch.on_data do |c, data|
+          # Could this data be the status code?
+          if pos = (data =~ /(\d{1,3})\n$/)
+            # Set status
+            status = $1
+
+            # Flush old buffer
+            opts[:stdout].call(buffer) if opts[:stdout]
+            stdout << buffer
+
+            # Save candidate status code
+            buffer = data[pos .. -1]
+
+            # Write the other part of the string to the callback
+            opts[:stdout].call(data[0...pos]) if opts[:stdout]
+            stdout << data[0...pos]
+          else
+            # Write buffer + data to callback
+            opts[:stdout].call(buffer + data) if opts[:stdout]
+            stdout << buffer + data
+            buffer = ''
+          end
+        end
+
+        # Handle STDERR
+        ch.on_extended_data do |c, type, data|
+          if type == 1
+            # STDERR
+            opts[:stderr].call(data) if opts[:stderr]
+            stderr << data
+          end
+        end
+        
+        # Handle close
+        ch.on_close do
+        end
+      end
+    end
+
+    # Wait for the command to complete.
+    channel.wait
+
+    # Make sure we have our status.
+    if status.nil? or status.empty?
+      raise "empty status in host#exec(), hmmm"
+    end
+
+    # Check status.
+    status = status.to_i
+    if status != 0
+      raise "#{command} exited with non-zero status #{status}!\nSTDERR:\n#{stderr}\nSTDOUT:\n#{stdout}"
+    end
+
+    stdout.chomp
   end
 
   # Returns true when a file exists, otherwise false
@@ -244,16 +319,6 @@ class Hydra::Host
     end
   end
 
-  # Opens a shell. Subsequent exec! commands are interpreted by the shell.
-  def shell(&block)
-    ssh.shell do |shell|
-      old_shell, @shell = @shell, shell
-      shell.execute! "cd #{escape(cwd)}"
-      instance_exec(&block)
-      @shell = old_shell
-    end
-  end
-
   # Opens an SSH connection and stores the connection in @ssh.
   def ssh
     if @ssh and not @ssh.closed?
@@ -263,7 +328,6 @@ class Hydra::Host
     if tunnel
       @ssh = tunnel.ssh(name, user)
     else
-      puts "SSH #{name}, #{user}"
       @ssh = Net::SSH.start(name, user)
     end
   end
