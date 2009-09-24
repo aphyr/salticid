@@ -58,7 +58,13 @@ describe "A Host" do
       rm 'foo'
     end
   end
-  
+ 
+  should 'read file modes' do
+    @h.host :localhost do
+      mode(ENV['HOME']).should == File.stat(ENV['HOME']).mode & 07777
+    end
+  end
+
   should 'accept standard input' do
     @h.host :localhost do
       cd '/tmp'

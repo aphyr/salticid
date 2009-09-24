@@ -19,6 +19,7 @@ class Hydra::Host
   # Pass :uniq => true to only append if the string is not already present in
   # the file.
   def append(str, file, opts = {})
+    file = expand_path(file)
     if opts[:uniq] and exists? file
       # Check to ensure the file does not contain the line already.
       begin
@@ -286,7 +287,7 @@ class Hydra::Host
 
   # Returns the home directory of the given user, or the current user if
   # none specified.
-  def homedir(user = @user)
+  def homedir(user = (@sudo||@user))
     exec! "awk -F: -v v=#{escape(user)} '{if ($1==v) print $6}' /etc/passwd"
   end
  
@@ -402,20 +403,22 @@ class Hydra::Host
     upload local, tmpfile, opts
 
     # Get remote mode/user/group
-    if exists? remote
-      mode = self.mode remote
-      user = sudo('stat', '-c', '%U', remote).strip
-      group = sudo('stat', '-c', '%G', remote).strip
-    else
-      user = sudo('stat', '-c', '%U', File.dirname(remote)).strip
-      group = sudo('stat', '-c', '%G', File.dirname(remote)).strip
-      mode = local_mode
-    end
+    sudo do
+      if exists? remote
+        mode = self.mode remote
+        user = stat('-c', '%U', remote).strip
+        group = stat('-c', '%G', remote).strip
+      else
+        user = stat('-c', '%U', File.dirname(remote)).strip
+        group = stat('-c', '%G', File.dirname(remote)).strip
+        mode = local_mode
+      end
 
-    # Move and chmod
-    sudo 'mv', tmpfile, remote
-    sudo 'chmod', mode.to_s(8), remote
-    sudo 'chown', "#{user}:#{group}", remote
+      # Move and chmod
+      mv tmpfile, remote
+      chmod mode, remote
+      chown "#{user}:#{group}", remote
+    end
   end
 
   # Finds (and optionally defines) a task.
