@@ -38,6 +38,27 @@ describe "A Host" do
     end
   end
 
+  should 'test file types' do
+    @h.host :localhost do
+      cd '/tmp'
+      dir?('.').should == true
+      file?('.').should == false
+
+      rm 'foo' rescue nil
+
+      exists?('foo').should == false
+      file?('foo').should == false
+      dir?('foo').should == false
+
+      touch 'foo'
+      file?('foo').should == true
+      exists?('foo').should == true
+      dir?('foo').should == false
+
+      rm 'foo'
+    end
+  end
+  
   should 'accept standard input' do
     @h.host :localhost do
       cd '/tmp'
@@ -45,6 +66,20 @@ describe "A Host" do
       tee 'foo.log', :stdin => 'hey this is some standard input'
       cat('foo.log').should == 'hey this is some standard input'
       rm 'foo.log'
+    end
+  end
+ 
+  should 'append to files' do
+    @h.host :localhost do
+      cd '/tmp'
+      exec! 'echo foo > hydra_tmp'
+      append('bar', 'hydra_tmp')
+      cat('hydra_tmp').should == "foo\nbar"
+
+      append('bar', 'hydra_tmp', :uniq => true)
+      cat('hydra_tmp').should == "foo\nbar"
+
+      rm 'hydra_tmp'
     end
   end
 end

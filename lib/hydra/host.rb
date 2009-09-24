@@ -21,22 +21,21 @@ class Hydra::Host
   end
 
   # Appends the given string to a file.
-  def append(str, file, opts = {:uniq => false})
+  # Pass :uniq => true to only append if the string is not already present in
+  # the file.
+  def append(str, file, opts = {})
     if opts[:uniq] and exists? file
       # Check to ensure the file does not contain the line already.
       begin
         grep(str, file) or raise
       rescue
-        return nil
+        # We're clear, go ahead.
+        tee '-a', file, :stdin => str
       end
+    else
+      # No need to check, just append.
+      tee '-a', file, :stdin => str
     end
-
-    if str =~ /EOF/
-      raise "Sorry, can't append this string, it has an EOF in it:\n#{str}"
-    end
-
-    puts "cat >>#{escape(file)} <<EOF\n#{str}EOF"
-    execute!("cat >>#{escape(file)} <<EOF\n#{str}EOF")
   end
 
   # All calls to exec! within this block are prefixed by sudoing to the user.
@@ -236,6 +235,8 @@ class Hydra::Host
       when /no such file or directory/i
         raise Errno::ENOENT, "#{self}:#{path} does not exist"
       when 'regular file'
+        'file'
+      when 'regular empty file'
         'file'
       when 'directory'
         'directory'
