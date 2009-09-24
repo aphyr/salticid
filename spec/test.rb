@@ -94,4 +94,16 @@ describe "A Host" do
       end
     end
   end
+
+  should 'tail a log file' do
+    @h.host :localhost do
+      i = 0
+      out = tail('-f', '/var/log/syslog', :stdout => lambda {i += 1}) do |ch|
+        sleep 3
+        ch.close
+      end
+      i.should > 1
+      out.should.not.be.empty
+    end
+  end
 end

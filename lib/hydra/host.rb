@@ -91,8 +91,18 @@ class Hydra::Host
     '"' + string.to_s.gsub(/[\\\$`"]/) { |match| '\\' + match } + '"'
   end
   
-  # Runs a remote command.
-  def exec!(command, opts = {})
+  # Runs a remote command.  If a block is given, it is run in a new thread
+  # after stdin is sent. Its sole argument is the SSH channel for this command:
+  # you may use send_data to write to the processes stdin, and use ch.eof! to
+  # close stdin. ch.close will stop the remote process.
+  #
+  # Options:
+  #   :stdin => Data piped to the process' stdin.
+  #   :stdout => A callback invoked when stdout is received from the process.
+  #              The argument is the data received.
+  #   :stderr => Like stdout, but for stderr.
+  #   :echo => Prints stdout and stderr using print, if true.
+  def exec!(command, opts = {}, &block)
     # Options
     stdout = ''
     stderr = ''
@@ -138,6 +148,7 @@ class Hydra::Host
             # Flush old buffer
             opts[:stdout].call(buffer) if opts[:stdout]
             stdout << buffer
+            print buffer if opts[:echo]
 
             # Save candidate status code
             buffer = data[pos .. -1]
@@ -145,10 +156,12 @@ class Hydra::Host
             # Write the other part of the string to the callback
             opts[:stdout].call(data[0...pos]) if opts[:stdout]
             stdout << data[0...pos]
+            print data[0...pos] if opts[:echo]
           else
             # Write buffer + data to callback
             opts[:stdout].call(buffer + data) if opts[:stdout]
             stdout << buffer + data
+            print buffer + data if opts[:echo]
             buffer = ''
           end
         end
@@ -159,6 +172,7 @@ class Hydra::Host
             # STDERR
             opts[:stderr].call(data) if opts[:stderr]
             stderr << data
+            print stderr if opts[:echo]
           end
         end
         
@@ -169,7 +183,10 @@ class Hydra::Host
               ch.send_data opts[:stdin]
               written = true
             else
-              ch.eof! unless ch.eof?
+              # Okay, we wrote stdin
+              unless block or ch.eof?
+                ch.eof!
+              end
             end
           end
         end
@@ -180,8 +197,25 @@ class Hydra::Host
       end
     end
     
+    if block
+      # Run the callback
+      callback_thread = Thread.new do
+        if opts[:stdin]
+          # Wait for stdin to be written before calling...
+          until written
+            sleep 0.1
+          end
+        end
+
+        block.call(channel)
+      end
+    end
+
     # Wait for the command to complete.
     channel.wait
+
+    # Let the callback thread finish as well
+    callback_thread.join if callback_thread
 
     # Make sure we have our status.
     if status.nil? or status.empty?
@@ -263,9 +297,9 @@ class Hydra::Host
   # Missing methods are resolved as follows:
   # 1. From task_resolve
   # 2. Converted to a command string and exec!'ed
-  def method_missing(meth, *args)
+  def method_missing(meth, *args, &block)
     if task = resolve_task(meth)
-      task.run(self, *args)
+      task.run(self, *args, &block)
     else
       if args.last.kind_of? Hash
         opts = args.pop
@@ -273,7 +307,7 @@ class Hydra::Host
         opts = {}
       end
       str = ([meth] + args.map{|a| escape(a)}).join(' ')
-      exec! str, opts
+      exec! str, opts, &block
     end
   end
 
