@@ -37,4 +37,14 @@ describe "A Host" do
       date.should =~ /\d\d:\d\d:\d\d/
     end
   end
+
+  should 'accept standard input' do
+    @h.host :localhost do
+      cd '/tmp'
+      cat(:stdin => 'foo').should == 'foo'
+      tee 'foo.log', :stdin => 'hey this is some standard input'
+      cat('foo.log').should == 'hey this is some standard input'
+      rm 'foo.log'
+    end
+  end
 end

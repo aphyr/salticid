@@ -134,6 +134,7 @@ class Hydra::Host
 
     buffer = ''
     status = nil
+    written = false
 
     # Run ze command with callbacks.
     # Return status.
@@ -175,12 +176,24 @@ class Hydra::Host
           end
         end
         
+        # Write stdin
+        if opts[:stdin]
+          ch.on_process do
+            unless written
+              ch.send_data opts[:stdin]
+              written = true
+            else
+              ch.eof! unless ch.eof?
+            end
+          end
+        end
+
         # Handle close
         ch.on_close do
         end
       end
     end
-
+    
     # Wait for the command to complete.
     channel.wait
 
@@ -266,8 +279,13 @@ class Hydra::Host
     if task = resolve_task(meth)
       task.run(self, *args)
     else
+      if args.last.kind_of? Hash
+        opts = args.pop
+      else
+        opts = {}
+      end
       str = ([meth] + args.map{|a| escape(a)}).join(' ')
-      exec! str
+      exec! str, opts
     end
   end
 
