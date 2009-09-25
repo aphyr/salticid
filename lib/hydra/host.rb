@@ -296,10 +296,13 @@ class Hydra::Host
   end
 
   # Missing methods are resolved as follows:
+  # 0. Create a RoleProxy from a Role on this host
   # 1. From task_resolve
   # 2. Converted to a command string and exec!'ed
   def method_missing(meth, *args, &block)
-    if task = resolve_task(meth)
+    if role = roles.find { |r| r.name == meth.to_s }
+      RoleProxy.new(self, role)
+    elsif task = resolve_task(meth)
       task.run(self, *args, &block)
     else
       if args.last.kind_of? Hash
@@ -332,11 +335,6 @@ class Hydra::Host
     @tasks.each do |task|
       return task if task.name == name
     end
-    @roles.each do |role|
-      role.tasks.each do |task|
-        return task if task.name == name
-      end
-    end
     @hydra.tasks.each do |task|
       return task if task.name == name
     end
@@ -347,17 +345,6 @@ class Hydra::Host
   # assignments will not result in more than one copy of the role.
   def role(role)
     @roles = @roles | [@hydra.role(role)]
-  end
-
-  # Run a task, tasks, or all defined tasks.
-  # Tasks are run in the order given.
-  # Tasks are run with this host as context.
-  def run(*task_names)
-    ssh
-    task_names.each do |name|
-      task = resolve_task(name) or raise RuntimeError, "no such task #{name} on #{self}"
-      task.run(self)
-    end
   end
 
   # Opens an SSH connection and stores the connection in @ssh.

@@ -8,10 +8,10 @@ $LOAD_PATH.unshift(File.dirname(__FILE__))
 class Hydra
   $LOAD_PATH.unshift(File.join(File.dirname(__FILE__), 'net-ssh-shell', 'lib'))
   require 'monkeypatch'
-  require 'net/ssh/shell'
   require 'snippets/instance_exec'
   require 'hydra/task'
   require 'hydra/role'
+  require 'hydra/role_proxy'
   require 'hydra/host'
   require 'hydra/gateway'
 

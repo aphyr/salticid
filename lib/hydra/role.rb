@@ -35,13 +35,6 @@ class Hydra::Role
     end
   end
 
-  # Runs all tasks in sequence, in a given context
-  def run(context = nil)
-    tasks.each do |task|
-      task.run(context)
-    end
-  end
-  
   # Finds (and optionally defines) a task.
   # 
   # Tasks are first resolved in the role's task list, then in the Hydra's task
