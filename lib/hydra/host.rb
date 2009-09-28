@@ -8,6 +8,7 @@ class Hydra::Host
     @hydra = opts[:hydra]
     @sudo = nil
 
+    @role_proxies = {}
     @before_cmds = []
   end
 
@@ -301,7 +302,7 @@ class Hydra::Host
   # 2. Converted to a command string and exec!'ed
   def method_missing(meth, *args, &block)
     if role = roles.find { |r| r.name == meth.to_s }
-      RoleProxy.new(self, role)
+      @role_proxies[meth.to_s] ||= RoleProxy.new(self, role)
     elsif task = resolve_task(meth)
       task.run(self, *args, &block)
     else
