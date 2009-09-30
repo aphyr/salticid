@@ -1,8 +1,9 @@
 class Hydra::Host
-  attr_accessor :name, :user, :roles, :tasks, :hydra
+  attr_accessor :name, :user, :groups, :roles, :tasks, :hydra
   def initialize(name, opts = {})
     @name = name.to_s
     @user = opts[:user].to_s
+    @groups = opts[:groups] || []
     @roles = opts[:roles] || []
     @tasks = opts[:tasks] || []
     @hydra = opts[:hydra]
@@ -281,9 +282,22 @@ class Hydra::Host
     end
   end
 
+  # Adds this host to a group.
+  def group(name)
+    group = name if name.kind_of? Hydra::Group
+    group ||= @hydra.group name
+    group.hosts |= [self]
+    @groups |= [group]
+    group
+  end
+
   # Returns the gateway for this host.
-  def gw
-    @hydra.gw
+  def gw(gw = nil)
+    if gw
+      @gw = @hydra.host(gw)
+    else
+      @gw || @hydra.gw
+    end
   end
 
   # Returns the home directory of the given user, or the current user if
@@ -380,7 +394,8 @@ class Hydra::Host
     # TODO: umask this?
     local_mode = File.stat(local).mode & 07777
     File.chmod 0600, local
-    
+  
+
     # Get temporary filename
     tmpfile = '/'
     while exists? tmpfile

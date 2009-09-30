@@ -14,29 +14,36 @@ class Hydra
   require 'hydra/role_proxy'
   require 'hydra/host'
   require 'hydra/gateway'
+  require 'hydra/group'
 
-  attr_accessor :gw, :hosts, :roles, :tasks
+  attr_accessor :gw, :groups, :hosts, :roles, :tasks
 
   def initialize
     @gw = nil
     @hosts = []
+    @groups = []
     @roles = []
     @tasks = []
   end
 
-  # Default SSH gateway.
+  # Define a gateway.
   def gw(name = nil, &block)
     # Get gateway from cache or set new one.
-    if name
-      # Set gateway
-      @gw = Hydra::Gateway.new(name, :hydra => self)
+    name = name.to_s
+
+    unless gw = @hosts.find{|h| h.name == name}
+      gw = Hydra::Gateway.new(name, :hydra => self)
+      @hosts << gw
+      # Set default gw
+      @gw = gw 
     end
+
 
     if block_given?
-      @gw.instance_exec &block
+      gw.instance_exec &block
     end
 
-    @gw
+    gw
   end
 
   def host(name, &block)
@@ -51,6 +58,26 @@ class Hydra
     end
 
     host
+  end
+
+  # Assigns a group to this Hydra. Runs the optional block in the group's
+  # context.  Returns the group.
+  def group(name, &block)
+    # Get group
+    group = name if name.kind_of? Hydra::Group 
+    name = name.to_s
+    group ||= @groups.find{|g| g.name == name}
+    group ||= Hydra::Group.new(name, :hydra => self)
+
+    # Store
+    @groups |= [group]
+
+    # Run block
+    if block_given?
+      group.instance_exec &block
+    end
+
+    group
   end
 
   # Loads one or more file globs into the current hydra.
@@ -96,5 +123,28 @@ class Hydra
     end
 
     task 
+  end
+
+  # Unknown methods are resolved as groups, then hosts, then roles, then tasks.
+  # Can you think of a better order?
+  #
+  # Blocks are instance_exec'd in the context of the found object.
+  def method_missing(meth, &block)
+    name = meth.to_s
+
+    found = @groups.find { |g| g.name == name }
+    found ||= @hosts.find { |h| h.name == name }
+    found ||= @roles.find { |r| r.name == name }
+    found ||= @tasks.find { |t| t.name == name }
+
+    unless found
+      raise NoMethodError
+    end
+
+    if block
+      found.instance_exec &block
+    end
+
+    found
   end
 end
