@@ -28,6 +28,10 @@ class Hydra
 
   # Define a gateway.
   def gw(name = nil, &block)
+    if name == nil
+      return @gw
+    end
+
     # Get gateway from cache or set new one.
     name = name.to_s
 
