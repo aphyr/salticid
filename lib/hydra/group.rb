@@ -19,6 +19,13 @@ class Hydra::Group
       self.parent == other.parent
   end
 
+  # Runs the block in the context of each.
+  def each_host(&block)
+    hosts.each do |host|
+      host.instance_exec &block
+    end
+  end
+
   # Finds all hosts (recursively) that are members of this group or subgroups.
   def hosts
     @hosts + @groups.map { |m|

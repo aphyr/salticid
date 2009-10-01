@@ -282,6 +282,13 @@ class Hydra::Host
     end
   end
 
+  # Abusing convention slightly...
+  # Returns the group by name if this host belongs to it, otherwise false.
+  def group?(name)
+    name = name.to_s
+    @groups.find{ |g| g.name == name } || false
+  end
+
   # Adds this host to a group.
   def group(name)
     group = name if name.kind_of? Hydra::Group
