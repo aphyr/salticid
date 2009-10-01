@@ -322,7 +322,7 @@ class Hydra::Host
   # 1. From task_resolve
   # 2. Converted to a command string and exec!'ed
   def method_missing(meth, *args, &block)
-    if role = roles.find { |r| r.name == meth.to_s }
+    if args.empty? and role = roles.find { |r| r.name == meth.to_s }
       @role_proxies[meth.to_s] ||= RoleProxy.new(self, role)
     elsif task = resolve_task(meth)
       task.run(self, *args, &block)
