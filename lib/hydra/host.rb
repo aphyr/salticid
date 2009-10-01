@@ -303,7 +303,7 @@ class Hydra::Host
     if gw
       @gw = @hydra.host(gw)
     else
-      @gw || @hydra.gw
+      @gw
     end
   end
 
