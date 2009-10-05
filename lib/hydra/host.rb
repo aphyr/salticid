@@ -105,6 +105,8 @@ class Hydra::Host
   #              The argument is the data received.
   #   :stderr => Like stdout, but for stderr.
   #   :echo => Prints stdout and stderr using print, if true.
+  #   :to => Shell output redirection to file. (like cmd >/foo)
+  #   :from => Shell input redirection from file. (like cmd </foo)
   def exec!(command, opts = {}, &block)
     # Options
     stdout = ''
@@ -116,6 +118,16 @@ class Hydra::Host
 
     # Before execution, cd to cwd
     command = "cd #{escape(cwd)}; " + command
+
+    # Input redirection
+    if opts[:from]
+      command += " <#{escape(opts[:from])}"
+    end
+
+    # Output redirection
+    if opts[:to]
+      command += " >#{escape(opts[:to])}"
+    end
 
     # After command, add a semicolon...
     unless command =~ /;\s*$/

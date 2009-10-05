@@ -112,4 +112,13 @@ describe "A Host" do
       out.should.not.be.empty
     end
   end
+
+  should 'redirect output' do
+    @h.host :localhost do
+      rm '/tmp/hydra_tmp' if exists? '/tmp/hydra_tmp'
+      cat :stdin => 'foo', :to => '/tmp/hydra_tmp'
+      cat('/tmp/hydra_tmp').should == 'foo'
+      rm '/tmp/hydra_tmp'
+    end
+  end
 end
