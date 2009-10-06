@@ -17,6 +17,10 @@ describe "A Host" do
     task :setup do
       'dreary setup'
     end
+
+    task :clone do
+      'a method name!'
+    end
   end
 
   @h.host :localhost do
@@ -30,6 +34,12 @@ describe "A Host" do
       awesome.setup.should == 'awesome setup'
       dreary.setup.should == 'dreary setup'
       lambda { setup }.should.raise
+    end
+  end
+
+  should 'resolve methods which are ordinarily defined as tasks' do
+    @h.host :localhost do
+      dreary.clone.should == 'a method name!'
     end
   end
 end
