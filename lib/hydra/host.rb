@@ -79,14 +79,14 @@ class Hydra::Host
     end
   end
 
-  # Download a file to the local host. Local defaults to remote if not
-  # specified.
-  def download(remote, local=nil, opts = {})
-    local ||= remote
+  # Downloads a file from the remote server. Local defaults to remote filename
+  # (without path) if not specified.
+  def download(remote, local = nil, opts = {})
+    local ||= File.split(remote).last
     remote = expand_path remote
-    ssh.scp.download!(remote, local, opts)
+    ssh.scp.download!(local, remote, opts)
   end
-
+  
   # Quotes a string for inclusion in a bash command line
   def escape(string)
     return '' if string.nil?
@@ -492,9 +492,10 @@ class Hydra::Host
     end
   end
 
-  # Upload a file to the server. Remote defaults to local if not specified.
+  # Upload a file to the server. Remote defaults to local's filename (without
+  # path) if not specified.
   def upload(local, remote = nil, opts={})
-    remote ||= local
+    remote ||= File.split(local).last
     remote = expand_path remote
     ssh.scp.upload!(local, remote, opts)
   end
