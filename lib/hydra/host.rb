@@ -80,11 +80,18 @@ class Hydra::Host
   end
 
   # Downloads a file from the remote server. Local defaults to remote filename
-  # (without path) if not specified.
+  # (in current path) if not specified.
   def download(remote, local = nil, opts = {})
-    local ||= File.split(remote).last
+    remote_filename ||= File.split(remote).last
+    if File.directory? local
+      local = File.join(local, remote_filename)
+    else
+      local = remote_filename
+    end
+
     remote = expand_path remote
-    ssh.scp.download!(local, remote, opts)
+    puts "downloading from #{remote.inspect} to #{local.inspect}"
+    ssh.scp.download!(remote, local, opts)
   end
   
   # Quotes a string for inclusion in a bash command line
