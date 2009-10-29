@@ -1,5 +1,7 @@
 class Hydra::Host
   attr_accessor :env, :name, :user, :groups, :roles, :tasks, :hydra
+  attr_reader :cwd
+
   def initialize(name, opts = {})
     @name = name.to_s
     @user = opts[:user].to_s
@@ -10,6 +12,7 @@ class Hydra::Host
     @sudo = nil
 
     @env = {}
+    @cwd = nil
     @role_proxies = {}
   end
 
@@ -58,16 +61,6 @@ class Hydra::Host
   # Changes the mode of a file, recursively. Mode is numeric.
   def chmod_r(mode, path)
     exec! "chmod -R #{mode.to_s(8)} #{escape(expand_path(path))}"
-  end
-
-  # Returns our idea of what the current working directory is.
-  # If @cwd has not been set (i.e. by cd(),) / is used.
-  def cwd
-    begin
-      @cwd ||= '/'
-    rescue
-      @cwd
-    end
   end
 
   # Returns true if a directory exists
@@ -131,7 +124,7 @@ class Hydra::Host
     end
 
     # Before execution, cd to cwd
-    command = "cd #{escape(cwd)}; " + command
+    command = "cd #{escape(@cwd)}; " + command
 
     # Input redirection
     if opts[:from]
