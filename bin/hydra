@@ -1,8 +1,41 @@
 #!/usr/bin/env ruby
 
-STDOUT.sync = true
-
+require 'rubygems'
+require 'trollop'
 require "#{File.dirname(__FILE__)}/../lib/hydra"
+
+opts = Trollop::options do
+  opt :host, 'One or more hosts to run tasks on', :type => :string, :multi => true
+  opt :group, 'One or more groups to run tasks on', :type => :string, :multi => true
+  opt :load, 'Files to load', :default => [File.join(ENV["HOME"], '.hydrarc')], :multi => true
+  opt :exec, 'A command line to execute.', :type => :string
+end
+
+tasks = ARGV
+Trollop::die 'Nothing to do' if tasks.empty? and opts[:exec].nil?
+
+STDOUT.sync = true
 @h = Hydra.new
-@h.load 'common/**/*.rb'
-@h.load ARGV.shift
+
+# Load files
+opts[:load].each do |file|
+  @h.load file
+end
+
+# Get hosts
+hosts = opts[:group].map { |g| @h.group(g).hosts } 
+hosts << opts[:host].map { |h| @h.host(h) }
+hosts.flatten!.uniq!
+Trollop::die 'No hosts' if hosts.empty?
+
+hosts.each do |host|
+  # Run explicit execs
+  if opts[:exec]
+    host.exec! opts[:exec], :echo => true
+  end
+
+  # Run tasks
+  tasks.each do |task|
+    host.instance_eval task
+  end
+end
