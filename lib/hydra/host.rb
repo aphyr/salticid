@@ -1,5 +1,5 @@
 class Hydra::Host
-  attr_accessor :name, :user, :groups, :roles, :tasks, :hydra
+  attr_accessor :env, :name, :user, :groups, :roles, :tasks, :hydra
   def initialize(name, opts = {})
     @name = name.to_s
     @user = opts[:user].to_s
@@ -9,8 +9,8 @@ class Hydra::Host
     @hydra = opts[:hydra]
     @sudo = nil
 
+    @env = {}
     @role_proxies = {}
-    @before_cmds = []
   end
 
   def ==(other)
@@ -122,6 +122,13 @@ class Hydra::Host
     }
     
     opts = defaults.merge opts
+
+    # First, set up the environment...
+    if @env.size > 0
+      command = (
+        @env.map { |k,v| k.to_s.upcase + '=' + v } << command
+      ).join(' ')
+    end
 
     # Before execution, cd to cwd
     command = "cd #{escape(cwd)}; " + command
