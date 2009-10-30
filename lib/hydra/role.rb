@@ -74,4 +74,17 @@ class Hydra::Role
   def to_s
     @name.to_s
   end
+
+  # When a task name is called on a role, it is automatically run on every host
+  # associated with that role.
+  #
+  # role(:myapp).deploy => role(:myapp).each_host { |h| h.myapp.deploy }
+  def method_missing(meth, *args, &block)
+    name = meth.to_s
+    if task = @tasks.find { |t| t.name == name }
+      hosts.each do |host|
+        task.run(host, *args)
+      end
+    end
+  end
 end
