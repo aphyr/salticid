@@ -7,6 +7,7 @@ require "#{File.dirname(__FILE__)}/../lib/hydra"
 opts = Trollop::options do
   opt :host, 'One or more hosts to run tasks on', :type => :string, :multi => true
   opt :group, 'One or more groups to run tasks on', :type => :string, :multi => true
+  opt :role, 'One or more roles. Every host in the role will have the specified tasks run.', :type => :string, :multi => true
   opt :load, 'Files to load', :default => [File.join(ENV["HOME"], '.hydrarc')], :multi => true
   opt :exec, 'A command line to execute.', :type => :string
 end
@@ -23,7 +24,8 @@ opts[:load].each do |file|
 end
 
 # Get hosts
-hosts = opts[:group].map { |g| @h.group(g).hosts } 
+hosts = opts[:group].map { |g| @h.group(g).hosts }
+hosts << opts[:role].map { |r| @h.role(r).hosts }
 hosts << opts[:host].map { |h| @h.host(h) }
 hosts.flatten!.uniq!
 Trollop::die 'No hosts' if hosts.empty?
