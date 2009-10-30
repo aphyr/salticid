@@ -1,6 +1,5 @@
 class Hydra::Host
   attr_accessor :env, :name, :user, :groups, :roles, :tasks, :hydra
-  attr_reader :cwd
 
   def initialize(name, opts = {})
     @name = name.to_s
@@ -61,6 +60,17 @@ class Hydra::Host
   # Changes the mode of a file, recursively. Mode is numeric.
   def chmod_r(mode, path)
     exec! "chmod -R #{mode.to_s(8)} #{escape(expand_path(path))}"
+  end
+
+  # Returns current working directory. Tries to obtain it from exec 'pwd',
+  # but falls back to /.
+  def cwd
+    @cwd ||= begin
+      exec! 'pwd'
+    rescue => e
+      raise e
+      '/'
+    end
   end
 
   # Returns true if a directory exists
@@ -260,7 +270,7 @@ class Hydra::Host
 
   # Generates a full path for the given remote path.
   def expand_path(path)
-    path = path.gsub(/~(\w+)?/) { |m| homedir($1) }
+    path = path.to_s.gsub(/~(\w+)?/) { |m| homedir($1) }
     File.expand_path(path, cwd.to_s)
   end
   
