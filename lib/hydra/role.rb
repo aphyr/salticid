@@ -75,6 +75,14 @@ class Hydra::Role
     @name.to_s
   end
 
+  def to_string
+    r = "Role #{@name}:\n"
+    r << "  Tasks:\n"
+    r << tasks.map { |t| "    #{t}" }.sort!.join("\n")
+    r << "\n  Hosts:\n"
+    r << hosts.map { |h| "    #{h}" }.join("\n")
+  end
+
   # When a task name is called on a role, it is automatically run on every host
   # associated with that role.
   #

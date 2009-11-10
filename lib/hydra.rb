@@ -129,6 +129,36 @@ class Hydra
     task 
   end
 
+  def to_s
+    "Hydra"
+  end
+
+  # An involved description of the hydra
+  def to_string
+    h = ''
+    h << "Groups\n"
+    groups.each do |group|
+      h << "  #{group}\n"
+    end
+    
+    h << "\nHosts:\n"
+    hosts.each do |host|
+      h << "  #{host}\n"
+    end
+    
+    h << "\nRoles\n"
+    roles.each do |role|
+      h << "  #{role}\n"
+    end
+
+    h << "\nTop-level tasks\n"
+    tasks.each do |task|
+      h << "  #{task}\n"
+    end
+
+    h
+  end
+
   # Unknown methods are resolved as groups, then hosts, then roles, then tasks.
   # Can you think of a better order?
   #

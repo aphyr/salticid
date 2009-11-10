@@ -500,6 +500,16 @@ class Hydra::Host
     @name.to_s
   end
 
+  def to_string
+    h = "Host #{@name}:\n"
+    h << "  Groups: #{groups.map(&:to_s).sort.join(', ')}\n" 
+    h << "  Roles: #{roles.map(&:to_s).sort.join(', ')}\n" 
+    h << "  Tasks:\n"
+    tasks = self.tasks.map(&:to_s)
+    tasks += roles.map { |r| r.tasks.map { |t| "    #{r}.#{t}" }}
+    h << tasks.flatten!.sort!.join("\n")
+  end
+
   # Returns an SSH::Gateway object for connecting to this host, or nil if no
   # gateway is needed.
   def tunnel

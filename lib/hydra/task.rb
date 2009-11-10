@@ -40,5 +40,10 @@ class Hydra::Task
   end
 
   def to_s
+    @name.to_s
+  end
+
+  def to_string
+    "Task #{self}"
   end
 end

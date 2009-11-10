@@ -5,15 +5,15 @@ require 'trollop'
 require "#{File.dirname(__FILE__)}/../lib/hydra"
 
 opts = Trollop::options do
-  opt :host, 'One or more hosts to run tasks on', :type => :string, :multi => true
-  opt :group, 'One or more groups to run tasks on', :type => :string, :multi => true
-  opt :role, 'One or more roles. Every host in the role will have the specified tasks run.', :type => :string, :multi => true
-  opt :load, 'Files to load', :default => [File.join(ENV["HOME"], '.hydrarc')], :multi => true
   opt :exec, 'A command line to execute.', :type => :string
+  opt :group, 'One or more groups to run tasks on', :type => :string, :multi => true
+  opt :host, 'One or more hosts to run tasks on', :type => :string, :multi => true
+  opt :load, 'Files to load', :default => [File.join(ENV["HOME"], '.hydrarc')], :multi => true
+  opt :role, 'One or more roles. Every host in the role will have the specified tasks run.', :type => :string, :multi => true
+  opt :show, 'Show roles, tasks, hosts, and groups. Try --show hydra or --show <host>', :type => :string
 end
 
 tasks = ARGV
-Trollop::die 'Nothing to do' if tasks.empty? and opts[:exec].nil?
 
 STDOUT.sync = true
 @h = Hydra.new
@@ -23,12 +23,41 @@ opts[:load].each do |file|
   @h.load file
 end
 
+# Map args to objects
+opts[:groups] = opts[:group].map { |g| @h.group g }
+opts[:roles] = opts[:role].map { |r| @h.role r }
+opts[:hosts] = opts[:host].map { |h| @h.host h }
+
 # Get hosts
-hosts = opts[:group].map { |g| @h.group(g).hosts }
-hosts << opts[:role].map { |r| @h.role(r).hosts }
-hosts << opts[:host].map { |h| @h.host(h) }
+hosts = opts[:groups].map { |g| g.hosts }
+hosts << opts[:roles].map { |r| r.hosts }
+hosts << opts[:hosts]
 hosts.flatten!.uniq!
 
+# Show info
+if opts[:show]
+  case opts[:show]
+  when 'hydra'
+    puts @h.to_string
+  else
+    begin
+      o = @h.send(opts[:show].to_sym)
+    rescue NoMethodError
+      puts "No such object: #{opts[:show]}"
+    end
+
+    if o.respond_to? :to_string
+      puts o.to_string
+    elsif o
+      p o
+    end
+  end
+  exit 0
+end
+
+Trollop::die 'Nothing to do' if tasks.empty? and opts[:exec].nil?
+
+# Run commands
 if hosts.empty?
   # Run commands directly on the hydra
   tasks.each do |task|

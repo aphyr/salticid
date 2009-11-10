@@ -86,4 +86,14 @@ class Hydra::Group
       '/' + @name
     end
   end
+
+  def to_s
+    @name
+  end
+
+  def to_string
+    h = "Group #{@name}:\n"
+    h << "  Hosts:\n"
+    h << hosts.map { |h| "    #{h}" }.join("\n")
+  end
 end
