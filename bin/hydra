@@ -66,14 +66,19 @@ if hosts.empty?
 else
   # Run commands on the hosts
   hosts.each do |host|
-    # Run explicit execs
-    if opts[:exec]
-      host.exec! opts[:exec], :echo => true
-    end
+    begin
+      puts host
+      # Run explicit execs
+      if opts[:exec]
+        host.exec! opts[:exec], :echo => true
+      end
 
-    # Run tasks
-    tasks.each do |task|
-      host.instance_eval task
+      # Run tasks
+      tasks.each do |task|
+        host.instance_eval task
+      end
+    rescue => e
+      puts "\nERROR: #{e}\n\n"
     end
   end
 end
