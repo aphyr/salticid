@@ -79,11 +79,12 @@ begin
         end
 
         # Run task
-        host.instance_eval task
+        host.instance_eval task if task
        
         host.log :finished, "Finished."
       rescue => e
         host.log :error, e.to_s
+        host.log :error, e.backtrace.join("\n")
       end
     end
   end
