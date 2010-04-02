@@ -6,9 +6,16 @@ require 'net/ssh/gateway'
 $LOAD_PATH.unshift(File.dirname(__FILE__))
 
 class Hydra
+  def self.log(str)
+    File.open('hydra.log', 'a') do |f|
+      f.puts str
+    end
+  end
+
   $LOAD_PATH.unshift(File.join(File.dirname(__FILE__), 'net-ssh-shell', 'lib'))
   require 'monkeypatch'
   require 'snippets/init'
+  require 'hydra/message'
   require 'hydra/task'
   require 'hydra/role'
   require 'hydra/role_proxy'

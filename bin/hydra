@@ -3,6 +3,7 @@
 require 'rubygems'
 require 'trollop'
 require "#{File.dirname(__FILE__)}/../lib/hydra"
+require 'hydra/interface'
 
 opts = Trollop::options do
   opt :exec, 'A command line to execute.', :type => :string
@@ -65,20 +66,40 @@ if hosts.empty?
   end
 else
   # Run commands on the hosts
-  hosts.each do |host|
-    begin
-      puts host
-      # Run explicit execs
-      if opts[:exec]
-        host.exec! opts[:exec], :echo => true
-      end
+  Thread.abort_on_exception = true
+  interface = Hydra::Interface.new @h
+  begin
+    interface.main
 
-      # Run tasks
-      tasks.each do |task|
-        host.instance_eval task
+    threads = hosts.map do |host|
+      interface.add_tab host
+      Thread.new do
+        begin
+          host.log "Starting..."
+          # Run explicit execs
+          if opts[:exec]
+            host.exec! opts[:exec], :echo => true
+          end
+
+          # Run tasks
+          tasks.each do |task|
+            host.instance_eval task
+          end
+         
+          host.log :finished, "Finished."
+        rescue => e
+          host.log :error, e.to_s
+        end
       end
-    rescue => e
-      puts "\nERROR: #{e}\n\n"
     end
+
+    # Run the interface loop.
+    interface.join
+
+    # When the interface exits, wait for each thread to complete work.
+    threads.each { |t| t.join rescue nil }
+  rescue => e
+    interface.shutdown
+    raise e
   end
 end

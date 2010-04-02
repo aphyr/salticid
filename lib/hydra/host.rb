@@ -10,6 +10,10 @@ class Hydra::Host
     @hydra = opts[:hydra]
     @sudo = nil
 
+    @on_log = proc { |message| }
+
+    @ssh_lock = Mutex.new
+
     @env = {}
     @cwd = nil
     @role_proxies = {}
@@ -93,7 +97,7 @@ class Hydra::Host
     end
 
     remote = expand_path remote
-    puts "downloading from #{remote.inspect} to #{local.inspect}"
+    log "downloading from #{remote.inspect} to #{local.inspect}"
     ssh.scp.download!(remote, local, opts)
   end
   
@@ -161,6 +165,7 @@ class Hydra::Host
     end
 
     buffer = ''
+    echoed = 0
     status = nil
     written = false
 
@@ -180,7 +185,6 @@ class Hydra::Host
             # Flush old buffer
             opts[:stdout].call(buffer) if opts[:stdout]
             stdout << buffer
-            print buffer if opts[:echo]
 
             # Save candidate status code
             buffer = data[pos .. -1]
@@ -188,13 +192,18 @@ class Hydra::Host
             # Write the other part of the string to the callback
             opts[:stdout].call(data[0...pos]) if opts[:stdout]
             stdout << data[0...pos]
-            print data[0...pos] if opts[:echo]
           else
             # Write buffer + data to callback
             opts[:stdout].call(buffer + data) if opts[:stdout]
             stdout << buffer + data
-            print buffer + data if opts[:echo]
             buffer = ''
+          end
+          
+          if opts[:echo] and echoed < stdout.length
+            stdout[echoed..-1].split("\n")[0..-2].each do |fragment|
+              echoed += fragment.length + 1
+              log fragment
+            end
           end
         end
 
@@ -204,7 +213,7 @@ class Hydra::Host
             # STDERR
             opts[:stderr].call(data) if opts[:stderr]
             stderr << data
-            print stderr if opts[:echo]
+            log :stderr, stderr if opts[:echo]
           end
         end
         
@@ -225,6 +234,13 @@ class Hydra::Host
 
         # Handle close
         ch.on_close do
+          if opts[:echo]
+            # Echo last of input data
+            stdout[echoed..-1].split("\n").each do |fragment|
+              echoed += fragment.length + 1
+              log fragment
+            end
+          end
         end
       end
     end
@@ -251,7 +267,7 @@ class Hydra::Host
 
     # Make sure we have our status.
     if status.nil? or status.empty?
-      raise "empty status in host#exec(), hmmm"
+      raise "empty status in host#exec() for #{command}, hmmm"
     end
 
     # Check status.
@@ -346,6 +362,17 @@ class Hydra::Host
     "#<#{@user}@#{@name} roles=#{@roles.inspect} tasks=#{@tasks.inspect}>"
   end
 
+  # Issues a logging statement to this host's log.
+  # log :error, "message"
+  # log "message" is the same as log "info", "message"
+  def log(*args)
+    begin
+      @on_log.call Message.new(*args)
+    rescue
+      # If the log handler is broken, keep going.
+    end
+  end
+
   # Missing methods are resolved as follows:
   # 0. Create a RoleProxy from a Role on this host
   # 1. From task_resolve
@@ -380,6 +407,10 @@ class Hydra::Host
     end
   end
 
+  def on_log(&block)
+    @on_log = block
+  end
+
   # Finds a task for this host, by name.
   def resolve_task(name)
     name = name.to_s
@@ -400,14 +431,16 @@ class Hydra::Host
 
   # Opens an SSH connection and stores the connection in @ssh.
   def ssh
-    if @ssh and not @ssh.closed?
-      return @ssh
-    end
+    @ssh_lock.synchronize do
+      if @ssh and not @ssh.closed?
+        return @ssh
+      end
 
-    if tunnel
-      @ssh = tunnel.ssh(name, user)
-    else
-      @ssh = Net::SSH.start(name, user)
+      if tunnel
+        @ssh = tunnel.ssh(name, user)
+      else
+        @ssh = Net::SSH.start(name, user)
+      end
     end
   end
 
