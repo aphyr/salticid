@@ -71,6 +71,16 @@ class Hydra
     host
   end
 
+  # Tries to guess what hosts we would run the given string on.
+  def hosts_for(string)
+    first = string[/^(\w+)\.\w+/, 1]
+    if role = @roles.find { |r| r.name == first }
+      return role.hosts
+    else
+      raise "Sorry, I didn't understand what hosts to run #{string.inspect} on."
+    end
+  end
+
   # Assigns a group to this Hydra. Runs the optional block in the group's
   # context.  Returns the group.
   def group(name, &block)

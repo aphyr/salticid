@@ -7,14 +7,14 @@ require 'hydra/interface'
 
 opts = Trollop::options do
   opt :exec, 'A command line to execute.', :type => :string
-  opt :group, 'One or more groups to run tasks on', :type => :string, :multi => true
-  opt :host, 'One or more hosts to run tasks on', :type => :string, :multi => true
+  opt :group, 'One or more groups to run task on', :type => :string, :multi => true
+  opt :host, 'One or more hosts to run task on', :type => :string, :multi => true
   opt :load, 'Files to load', :default => [File.join(ENV["HOME"], '.hydrarc')], :multi => true
-  opt :role, 'One or more roles. Every host in the role will have the specified tasks run.', :type => :string, :multi => true
+  opt :role, 'One or more roles. Every host in the role will have the specified task run.', :type => :string, :multi => true
   opt :show, 'Show roles, tasks, hosts, and groups. Try --show hydra or --show <host>', :type => :string
 end
 
-tasks = ARGV
+task = ARGV.first
 
 STDOUT.sync = true
 @h = Hydra.new
@@ -34,6 +34,11 @@ hosts = opts[:groups].map { |g| g.hosts }
 hosts << opts[:roles].map { |r| r.hosts }
 hosts << opts[:hosts]
 hosts.flatten!.uniq!
+
+# If no hosts were given, we may infer them from the task.
+if hosts.empty?
+  hosts |= @h.hosts_for(task)
+end
 
 # Show info
 if opts[:show]
@@ -56,50 +61,39 @@ if opts[:show]
   exit 0
 end
 
-Trollop::die 'Nothing to do' if tasks.empty? and opts[:exec].nil?
+Trollop::die 'Nothing to do' if task.nil? and opts[:exec].nil?
 
-# Run commands
-if hosts.empty?
-  # Run commands directly on the hydra
-  tasks.each do |task|
-    @h.instance_eval task
-  end
-else
-  # Run commands on the hosts
-  Thread.abort_on_exception = true
-  interface = Hydra::Interface.new @h
-  begin
-    interface.main
-
-    threads = hosts.map do |host|
-      interface.add_tab host
-      Thread.new do
-        begin
-          host.log "Starting..."
-          # Run explicit execs
-          if opts[:exec]
-            host.exec! opts[:exec], :echo => true
-          end
-
-          # Run tasks
-          tasks.each do |task|
-            host.instance_eval task
-          end
-         
-          host.log :finished, "Finished."
-        rescue => e
-          host.log :error, e.to_s
+# Run commands on the hosts
+Thread.abort_on_exception = true
+interface = Hydra::Interface.new @h
+begin
+  interface.main
+  threads = hosts.map do |host|
+    interface.add_tab host
+    Thread.new do
+      begin
+        host.log "Starting..."
+        # Run explicit execs
+        if opts[:exec]
+          host.exec! opts[:exec], :echo => true
         end
+
+        # Run task
+        host.instance_eval task
+       
+        host.log :finished, "Finished."
+      rescue => e
+        host.log :error, e.to_s
       end
     end
-
-    # Run the interface loop.
-    interface.join
-
-    # When the interface exits, wait for each thread to complete work.
-    threads.each { |t| t.join rescue nil }
-  rescue => e
-    interface.shutdown
-    raise e
   end
+
+  # Run the interface loop.
+  interface.join
+
+  # When the interface exits, wait for each thread to complete work.
+  threads.each { |t| t.join rescue nil }
+rescue => e
+  interface.shutdown
+  raise e
 end
