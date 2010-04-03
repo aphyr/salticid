@@ -113,7 +113,6 @@ class Hydra
       end
 
       def shutdown
-        Hydra.log "Shutting down #{self}"
         @host.on_log do |message|
           puts message.text
         end
