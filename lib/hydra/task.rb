@@ -33,13 +33,7 @@ class Hydra::Task
   # Runs the task in a given context
   def run(context = nil, *args)
     if context
-      begin
-        context.instance_exec(*args, &@block)
-      rescue Exception => err
-        puts "[task: #{name}] #{err.message}"
-        puts err.backtrace.grep(/deploy/).join("\n")
-        raise err
-      end
+      context.instance_exec(*args, &@block)
     else
       @block.call(*args)
     end
