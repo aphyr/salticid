@@ -54,6 +54,8 @@ class Hydra
         :height => 1
       )
 
+      @tabs.window.keypad true
+
       colorize
     end
 
@@ -121,6 +123,18 @@ class Hydra
             @tabs.scroll
           when ?q
             shutdown
+          when Ncurses::KEY_LEFT
+            @tabs.scroll -1
+          when Ncurses::KEY_RIGHT
+            @tabs.scroll 1
+          when Ncurses::KEY_PPAGE
+            tab.scroll -tab.height / 2
+          when Ncurses::KEY_NPAGE
+            tab.scroll tab.height / 2
+          when Ncurses::KEY_UP
+            tab.scroll -1 
+          when Ncurses::KEY_DOWN
+            tab.scroll 1
           end
         end
       end
