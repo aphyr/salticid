@@ -37,7 +37,7 @@ hosts.flatten!.uniq!
 
 # If no hosts were given, we may infer them from the task.
 if hosts.empty?
-  hosts |= @h.hosts_for(task)
+  hosts |= @h.hosts_for(task) rescue nil
 end
 
 # Show info
