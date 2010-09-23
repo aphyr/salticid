@@ -103,10 +103,12 @@ class Hydra
 
   # Loads one or more file globs into the current hydra.
   def load(*globs)
-    globs.each do |glob|
+    skips = globs.grep(/^-/)
+    (globs - skips).each do |glob|
       glob += '.rb' if glob =~ /\*$/
       Dir.glob(glob).each do |path|
         next unless File.file? path
+        next if skips.find {|pat| path =~ /#{pat[1..-1]}$/}
         instance_eval(File.read(path), path)
       end
     end
