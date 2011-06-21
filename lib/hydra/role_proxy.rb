@@ -12,8 +12,8 @@ class RoleProxy
   # host :foo do
   #   my_role.some_task
   # end
- 
-  undef_method(*(instance_methods - %w/__id__ __send__ respond_to? debugger/))
+
+  undef_method(*(instance_methods - [:__id__, :__send__, :respond_to?, :object_id]))
 
   def initialize(host, role)
     @host = host
