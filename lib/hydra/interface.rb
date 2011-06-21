@@ -114,7 +114,7 @@ class Hydra
             char = @tabs.window.getch
           else
             Thread.pass
-            retry
+            next
           end
 
           # Do stuff
