@@ -126,6 +126,7 @@ class Hydra::Host
     stdout = ''
     stderr = ''
     defaults = {
+      :check_exit_status => true
     }
     
     opts = defaults.merge opts
@@ -265,15 +266,17 @@ class Hydra::Host
     # Let the callback thread finish as well
     callback_thread.join if callback_thread
 
-    # Make sure we have our status.
-    if status.nil? or status.empty?
-      raise "empty status in host#exec() for #{command}, hmmm"
-    end
+    if opts[:check_exit_status]
+      # Make sure we have our status.
+      if status.nil? or status.empty?
+        raise "empty status in host#exec() for #{command}, hmmm"
+      end
 
-    # Check status.
-    status = status.to_i
-    if status != 0
-      raise "#{command} exited with non-zero status #{status}!\nSTDERR:\n#{stderr}\nSTDOUT:\n#{stdout}"
+      # Check status.
+      status = status.to_i
+      if  status != 0
+        raise "#{command} exited with non-zero status #{status}!\nSTDERR:\n#{stderr}\nSTDOUT:\n#{stdout}"
+      end
     end
 
     stdout.chomp
