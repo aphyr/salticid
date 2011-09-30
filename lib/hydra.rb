@@ -106,7 +106,7 @@ class Hydra
     skips = globs.grep(/^-/)
     (globs - skips).each do |glob|
       glob += '.rb' if glob =~ /\*$/
-      Dir.glob(glob).each do |path|
+      Dir.glob(glob).sort.each do |path|
         next unless File.file? path
         next if skips.find {|pat| path =~ /#{pat[1..-1]}$/}
         instance_eval(File.read(path), path)
