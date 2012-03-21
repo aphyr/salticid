@@ -436,6 +436,11 @@ class Hydra::Host
     @roles = @roles | [@hydra.role(role)]
   end
 
+  # Does this host have the given role?
+  def role?(role)
+    @roles.any? { |r| r.name == role.to_s }
+  end
+
   # Opens an SSH connection and stores the connection in @ssh.
   def ssh
     @ssh_lock.synchronize do
