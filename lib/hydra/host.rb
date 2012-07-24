@@ -1,5 +1,5 @@
 class Hydra::Host
-  attr_accessor :env, :name, :user, :groups, :roles, :tasks, :hydra
+  attr_accessor :env, :name, :user, :groups, :roles, :tasks, :hydra, :password
 
   def initialize(name, opts = {})
     @name = name.to_s
@@ -162,7 +162,8 @@ class Hydra::Host
 
     # If applicable, wrap the command in a sudo subshell...
     if @sudo
-      command = "sudo -u #{@sudo} bash -c #{escape(command)}"
+      command = "sudo -S -u #{@sudo} bash -c #{escape(command)}"
+      opts[:stdin] = @password + "\n" + opts[:stdin].to_s
     end
 
     buffer = ''
