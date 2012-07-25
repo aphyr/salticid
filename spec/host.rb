@@ -2,7 +2,7 @@
 
 require 'rubygems'
 require 'bacon'
-require "#{File.dirname(__FILE__)}/../lib/hydra"
+require File.expand_path("#{File.dirname(__FILE__)}/../lib/hydra")
 
 describe "A Host" do
   @h = Hydra.new
@@ -40,6 +40,12 @@ describe "A Host" do
   should 'resolve methods which are ordinarily defined as tasks' do
     @h.host :localhost do
       dreary.clone.should == 'a method name!'
+    end
+  end
+
+  should '#run' do
+    @h.host :localhost do
+      run(:dreary, :clone).should == 'a method name!'
     end
   end
 end

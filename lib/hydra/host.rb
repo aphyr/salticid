@@ -386,8 +386,8 @@ class Hydra::Host
       raise NoMethodError
     end
 
-    if args.empty? and role = roles.find { |r| r.name == meth.to_s }
-      @role_proxies[meth.to_s] ||= RoleProxy.new(self, role)
+    if args.empty? and rp = role_proxy(meth)
+      rp
     elsif task = resolve_task(meth)
       task.run(self, *args, &block)
     else
@@ -440,6 +440,23 @@ class Hydra::Host
   # Does this host have the given role?
   def role?(role)
     @roles.any? { |r| r.name == role.to_s }
+  end
+
+  # Returns a role proxy for role on this host, if we have the role.
+  def role_proxy(name)
+    if role = roles.find { |r| r.name == name.to_s }
+      @role_proxies[name.to_s] ||= RoleProxy.new(self, role)
+    end
+  end
+
+  # Runs the specified task on the given role. Raises NoMethodError if
+  # either the role or task do not exist.
+  def run(role, task, *args)
+    if rp = role_proxy(role)
+      rp.__send__(task, *args)
+    else
+      raise NoMethodError, "No such role #{role.inspect} on #{self}"
+    end
   end
 
   # Opens an SSH connection and stores the connection in @ssh.
