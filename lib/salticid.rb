@@ -5,6 +5,8 @@ require 'net/ssh/gateway'
 
 $LOAD_PATH.unshift(File.dirname(__FILE__))
 
+require 'salticid/version'
+
 class Salticid
   def self.log(str)
     File.open('salticid.log', 'a') do |f|
