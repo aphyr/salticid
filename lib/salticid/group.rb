@@ -1,4 +1,4 @@
-class Hydra::Group
+class Salticid::Group
   # A collection of hosts and other groups.
   
   attr_reader :name
@@ -7,7 +7,7 @@ class Hydra::Group
 
   def initialize(name, opts = {})
     @name = name.to_s
-    @hydra = opts[:hydra]
+    @salticid = opts[:salticid]
     @parent = opts[:parent]
     @hosts = []
     @groups = []
@@ -38,7 +38,7 @@ class Hydra::Group
     # Get group
     name = name.to_s
     group = @groups.find{|g| g.name == name}
-    group ||= Hydra::Group.new(name, :hydra => @hydra, :parent => self)
+    group ||= Salticid::Group.new(name, :salticid => @salticid, :parent => self)
 
     # Store
     @groups |= [group]
@@ -53,13 +53,13 @@ class Hydra::Group
 
   # Adds a host (by name) to the group. Returns the host.
   def host(name)
-    host = @hydra.host name
+    host = @salticid.host name
     host.groups |= [self]
     @hosts |= [host]
   end
   
   def inspect
-    "#<Hydra::Group #{path}>"
+    "#<Salticid::Group #{path}>"
   end
 
   # Unknown methods are resolved as groups, then hosts. Blocks are instance_exec'd in the found context.

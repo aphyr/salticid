@@ -1,4 +1,4 @@
-class Hydra::Task
+class Salticid::Task
   # A named block, runnable in some context
   attr_accessor :name, :block
 
@@ -12,7 +12,7 @@ class Hydra::Task
   end
 
   def dup
-    dup = Hydra::Task.new(@name)
+    dup = Salticid::Task.new(@name)
     dup.block = @block 
     dup
   end

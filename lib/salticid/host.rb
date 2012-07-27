@@ -1,5 +1,5 @@
-class Hydra::Host
-  attr_accessor :env, :name, :user, :groups, :roles, :tasks, :hydra, :password
+class Salticid::Host
+  attr_accessor :env, :name, :user, :groups, :roles, :tasks, :salticid, :password
 
   def initialize(name, opts = {})
     @name = name.to_s
@@ -7,7 +7,7 @@ class Hydra::Host
     @groups = opts[:groups] || []
     @roles = opts[:roles] || []
     @tasks = opts[:tasks] || []
-    @hydra = opts[:hydra]
+    @salticid = opts[:salticid]
     @sudo = nil
 
     @on_log = proc { |message| }
@@ -340,8 +340,8 @@ class Hydra::Host
 
   # Adds this host to a group.
   def group(name)
-    group = name if name.kind_of? Hydra::Group
-    group ||= @hydra.group name
+    group = name if name.kind_of? Salticid::Group
+    group ||= @salticid.group name
     group.hosts |= [self]
     @groups |= [group]
     group
@@ -350,7 +350,7 @@ class Hydra::Host
   # Returns the gateway for this host.
   def gw(gw = nil)
     if gw
-      @gw = @hydra.host(gw)
+      @gw = @salticid.host(gw)
     else
       @gw
     end
@@ -425,16 +425,16 @@ class Hydra::Host
     @tasks.each do |task|
       return task if task.name == name
     end
-    @hydra.tasks.each do |task|
+    @salticid.tasks.each do |task|
       return task if task.name == name
     end
     nil
   end
 
-  # Assigns roles to a host from the Hydra. Roles are unique in hosts; repeat
+  # Assigns roles to a host from the Salticid. Roles are unique in hosts; repeat
   # assignments will not result in more than one copy of the role.
   def role(role)
-    @roles = @roles | [@hydra.role(role)]
+    @roles = @roles | [@salticid.role(role)]
   end
 
   # Does this host have the given role?
@@ -525,7 +525,7 @@ class Hydra::Host
 
   # Finds (and optionally defines) a task.
   # 
-  # Tasks are first resolved in the host's task list, then in the Hydra's task
+  # Tasks are first resolved in the host's task list, then in the Salticid's task
   # list. Finally, tasks are created from scratch. Any invocation of task adds
   # that task to this host.
   # 
@@ -538,12 +538,12 @@ class Hydra::Host
 
     if task = @tasks.find{|t| t.name == name}
       # Found in self
-    elsif (task = @hydra.tasks.find{|t| t.name == name}) and not block_given?
-      # Found in hydra
+    elsif (task = @salticid.tasks.find{|t| t.name == name}) and not block_given?
+      # Found in salticid
       @tasks << task
     else
       # Create new task in self
-      task = Hydra::Task.new(name, :hydra => @hydra)
+      task = Salticid::Task.new(name, :salticid => @salticid)
       @tasks << task
     end
 

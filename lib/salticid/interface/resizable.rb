@@ -1,4 +1,4 @@
-class Hydra
+class Salticid
   class Interface
     module Resizeable
       def resize(dimensions = nil)

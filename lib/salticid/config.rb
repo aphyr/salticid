@@ -1,4 +1,4 @@
-module Hydra
+module Salticid
   def self.config
     @config
   end

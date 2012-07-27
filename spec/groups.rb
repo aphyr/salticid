@@ -2,10 +2,10 @@
 
 require 'rubygems'
 require 'bacon'
-require "#{File.dirname(__FILE__)}/../lib/hydra"
+require File.expand_path "#{File.dirname(__FILE__)}/../lib/salticid"
 
 describe "Groups" do
-  @h = Hydra.new
+  @h = Salticid.new
 
   @h.host :foo do
   end
@@ -21,15 +21,15 @@ describe "Groups" do
   end
 
   @h.host :baz do
-    group @hydra.top.sub
+    group @salticid.top.sub
   end
 
   it 'should resolve top-level groups' do
-    @h.top.should.be.kind_of? Hydra::Group
+    @h.top.should.be.kind_of? Salticid::Group
   end
 
   it 'should resolve nested groups' do
-    @h.top.sub.should.be.kind_of? Hydra::Group
+    @h.top.sub.should.be.kind_of? Salticid::Group
   end
 
   it 'should nest groups' do

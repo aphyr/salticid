@@ -2,10 +2,10 @@
 
 require 'rubygems'
 require 'bacon'
-require File.expand_path("#{File.dirname(__FILE__)}/../lib/hydra")
+require File.expand_path("#{File.dirname(__FILE__)}/../lib/salticid")
 
 describe "A Host" do
-  @h = Hydra.new
+  @h = Salticid.new
 
   @h.role :awesome do
     task :setup do

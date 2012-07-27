@@ -2,22 +2,22 @@
 
 require 'rubygems'
 require 'trollop'
-require "#{File.dirname(__FILE__)}/../lib/hydra"
-require 'hydra/interface'
+require "#{File.dirname(__FILE__)}/../lib/salticid"
+require 'salticid/interface'
 
 opts = Trollop::options do
   opt :exec, 'A command line to execute.', :type => :string
   opt :group, 'One or more groups to run task on', :type => :string, :multi => true
   opt :host, 'One or more hosts to run task on', :type => :string, :multi => true
-  opt :load, 'Files to load', :default => [File.join(ENV["HOME"], '.hydrarc')], :multi => true
+  opt :load, 'Files to load', :default => [File.join(ENV["HOME"], '.salticidrc')], :multi => true
   opt :role, 'One or more roles. Every host in the role will have the specified task run.', :type => :string, :multi => true
-  opt :show, 'Show roles, tasks, hosts, and groups. Try --show hydra or --show <host>', :type => :string
+  opt :show, 'Show roles, tasks, hosts, and groups. Try --show salticid or --show <host>', :type => :string
 end
 
 task = ARGV.first
 
 STDOUT.sync = true
-@h = Hydra.new
+@h = Salticid.new
 
 # Load files
 opts[:load].each do |file|
@@ -43,7 +43,7 @@ end
 # Show info
 if opts[:show]
   case opts[:show]
-  when 'hydra'
+  when 'salticid'
     puts @h.to_string
   else
     begin
@@ -65,7 +65,7 @@ Trollop::die 'Nothing to do' if task.nil? and opts[:exec].nil?
 
 # Run commands on the hosts
 Thread.abort_on_exception = true
-interface = Hydra::Interface.new @h
+interface = Salticid::Interface.new @h
 begin
   interface.main
   threads = hosts.map do |host|

@@ -5,9 +5,9 @@ require 'net/ssh/gateway'
 
 $LOAD_PATH.unshift(File.dirname(__FILE__))
 
-class Hydra
+class Salticid
   def self.log(str)
-    File.open('hydra.log', 'a') do |f|
+    File.open('salticid.log', 'a') do |f|
       f.puts str
     end
   end
@@ -15,13 +15,13 @@ class Hydra
   $LOAD_PATH.unshift(File.join(File.dirname(__FILE__), 'net-ssh-shell', 'lib'))
   require 'monkeypatch'
   require 'snippets/init'
-  require 'hydra/message'
-  require 'hydra/task'
-  require 'hydra/role'
-  require 'hydra/role_proxy'
-  require 'hydra/host'
-  require 'hydra/gateway'
-  require 'hydra/group'
+  require 'salticid/message'
+  require 'salticid/task'
+  require 'salticid/role'
+  require 'salticid/role_proxy'
+  require 'salticid/host'
+  require 'salticid/gateway'
+  require 'salticid/group'
 
   attr_accessor :gw, :groups, :hosts, :roles, :tasks
 
@@ -43,7 +43,7 @@ class Hydra
     name = name.to_s
 
     unless gw = @hosts.find{|h| h.name == name}
-      gw = Hydra::Gateway.new(name, :hydra => self)
+      gw = Salticid::Gateway.new(name, :salticid => self)
       @hosts << gw
       # Set default gw
       @gw = gw 
@@ -60,7 +60,7 @@ class Hydra
   def host(name, &block)
     name = name.to_s
     unless host = @hosts.find{|h| h.name == name}
-      host = Hydra::Host.new(name, :hydra => self)
+      host = Salticid::Host.new(name, :salticid => self)
       @hosts << host
     end
 
@@ -81,14 +81,14 @@ class Hydra
     end
   end
 
-  # Assigns a group to this Hydra. Runs the optional block in the group's
+  # Assigns a group to this Salticid. Runs the optional block in the group's
   # context.  Returns the group.
   def group(name, &block)
     # Get group
-    group = name if name.kind_of? Hydra::Group 
+    group = name if name.kind_of? Salticid::Group 
     name = name.to_s
     group ||= @groups.find{|g| g.name == name}
-    group ||= Hydra::Group.new(name, :hydra => self)
+    group ||= Salticid::Group.new(name, :salticid => self)
 
     # Store
     @groups |= [group]
@@ -101,7 +101,7 @@ class Hydra
     group
   end
 
-  # Loads one or more file globs into the current hydra.
+  # Loads one or more file globs into the current salticid.
   def load(*globs)
     skips = globs.grep(/^-/)
     (globs - skips).each do |glob|
@@ -119,7 +119,7 @@ class Hydra
     name = name.to_s
 
     unless role = @roles.find{|r| r.name == name}
-      role = Hydra::Role.new(name, :hydra => self)
+      role = Salticid::Role.new(name, :salticid => self)
       @roles << role
     end
 
@@ -137,7 +137,7 @@ class Hydra
     name = name.to_s
 
     unless task = @tasks.find{|t| t.name == name}
-      task = Hydra::Task.new(name, :hydra => self)
+      task = Salticid::Task.new(name, :salticid => self)
       @tasks << task
     end
   
@@ -149,10 +149,10 @@ class Hydra
   end
 
   def to_s
-    "Hydra"
+    "Salticid"
   end
 
-  # An involved description of the hydra
+  # An involved description of the salticid
   def to_string
     h = ''
     h << "Groups\n"

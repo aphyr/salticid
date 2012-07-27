@@ -1,11 +1,11 @@
-class Hydra::Role
+class Salticid::Role
   # A role is a list of tasks.
-  attr_reader :name, :tasks, :hydra
+  attr_reader :name, :tasks, :salticid
 
   def initialize(name, opts = {})
     @name = name.to_s
     @tasks = []
-    @hydra = opts[:hydra]
+    @salticid = opts[:salticid]
   end
 
   # Runs the block in the context of each.
@@ -15,9 +15,9 @@ class Hydra::Role
     end
   end
 
-  # Returns an array of all hosts in this hydra which include this role.
+  # Returns an array of all hosts in this salticid which include this role.
   def hosts
-    @hydra.hosts.select do |host|
+    @salticid.hosts.select do |host|
       host.roles.include? self
     end
   end
@@ -37,7 +37,7 @@ class Hydra::Role
 
   # Finds (and optionally defines) a task.
   # 
-  # Tasks are first resolved in the role's task list, then in the Hydra's task
+  # Tasks are first resolved in the role's task list, then in the Salticid's task
   # list. Finally, tasks are created from scratch. Any invocation of task adds
   # that task to this role.
   # 
@@ -50,12 +50,12 @@ class Hydra::Role
 
     if task = @tasks.find{|t| t.name == name}
       # Found in self
-    elsif (task = @hydra.tasks.find{|t| t.name == name}) and not block_given?
-      # Found in hydra
+    elsif (task = @salticid.tasks.find{|t| t.name == name}) and not block_given?
+      # Found in salticid
       @tasks << task
     else
       # Create new task in self
-      task = Hydra::Task.new(name, :hydra => @hydra)
+      task = Salticid::Task.new(name, :salticid => @salticid)
       @tasks << task
     end
 

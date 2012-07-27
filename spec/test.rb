@@ -2,11 +2,11 @@
 
 require 'rubygems'
 require 'bacon'
-require "#{File.dirname(__FILE__)}/../lib/hydra"
+require File.expand_path "#{File.dirname(__FILE__)}/../lib/salticid"
 
 
 describe "A Host" do
-  @h = Hydra.new
+  @h = Salticid.new
   @h.host :localhost do
     user ENV['USER']
   end
@@ -78,14 +78,14 @@ describe "A Host" do
   should 'append to files' do
     @h.host :localhost do
       cd '/tmp'
-      exec! 'echo foo > hydra_tmp'
-      append('bar', 'hydra_tmp')
-      cat('hydra_tmp').should == "foo\nbar"
+      exec! 'echo foo > salticid_tmp'
+      append('bar', 'salticid_tmp')
+      cat('salticid_tmp').should == "foo\nbar"
 
-      append('bar', 'hydra_tmp', :uniq => true)
-      cat('hydra_tmp').should == "foo\nbar"
+      append('bar', 'salticid_tmp', :uniq => true)
+      cat('salticid_tmp').should == "foo\nbar"
 
-      rm 'hydra_tmp'
+      rm 'salticid_tmp'
     end
   end
 
@@ -94,9 +94,9 @@ describe "A Host" do
       as ENV['USER'] do
         cd '/tmp'
         pwd.should == '/tmp'
-        exec! 'echo foo > hydra_tmp'
-        cat('hydra_tmp').should == "foo"
-        rm 'hydra_tmp'
+        exec! 'echo foo > salticid_tmp'
+        cat('salticid_tmp').should == "foo"
+        rm 'salticid_tmp'
       end
     end
   end
@@ -115,10 +115,10 @@ describe "A Host" do
 
   should 'redirect output' do
     @h.host :localhost do
-      rm '/tmp/hydra_tmp' if exists? '/tmp/hydra_tmp'
-      cat :stdin => 'foo', :to => '/tmp/hydra_tmp'
-      cat('/tmp/hydra_tmp').should == 'foo'
-      rm '/tmp/hydra_tmp'
+      rm '/tmp/salticid_tmp' if exists? '/tmp/salticid_tmp'
+      cat :stdin => 'foo', :to => '/tmp/salticid_tmp'
+      cat('/tmp/salticid_tmp').should == 'foo'
+      rm '/tmp/salticid_tmp'
     end
   end
 end

@@ -1,4 +1,4 @@
-module Hydra::Host::IP
+module Salticid::Host::IP
   # Host methods for IP addresses
   
   # Get all active IP addresses.

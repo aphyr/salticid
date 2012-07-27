@@ -1,4 +1,4 @@
-class Hydra
+class Salticid
   class Interface
     class View
       include Resizeable

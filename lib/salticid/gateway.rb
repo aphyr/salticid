@@ -1,4 +1,4 @@
-class Hydra::Gateway < Hydra::Host
+class Salticid::Gateway < Salticid::Host
   def initialize(*args)
     @tunnel_lock = Mutex.new
     super *args

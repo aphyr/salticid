@@ -1,11 +1,11 @@
-class Hydra
+class Salticid
   class Interface
     require 'ncurses'
-    require 'hydra/interface/ncurses'
-    require 'hydra/interface/resizable'
-    require 'hydra/interface/view'
-    require 'hydra/interface/tab_view'
-    require 'hydra/interface/host_view'
+    require 'salticid/interface/ncurses'
+    require 'salticid/interface/resizable'
+    require 'salticid/interface/view'
+    require 'salticid/interface/tab_view'
+    require 'salticid/interface/host_view'
 
     COLORS = {
       :info => Ncurses::COLOR_WHITE,
@@ -32,9 +32,9 @@ class Hydra
       end
     end
 
-    attr_reader :hosts, :hydra
+    attr_reader :hosts, :salticid
 
-    def initialize(hydra)
+    def initialize(salticid)
       self.class.interfaces << self
 
       # Set up ncurses
@@ -47,7 +47,7 @@ class Hydra
       Ncurses.start_color
       Ncurses.use_default_colors
 
-      @hydra = hydra
+      @salticid = salticid
       @hosts = []
       @tabs = TabView.new(
         self,
