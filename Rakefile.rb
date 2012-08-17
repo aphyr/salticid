@@ -28,10 +28,10 @@ gemspec = Gem::Specification.new do |s|
   s.required_ruby_version = '>= 1.8.7'
  
   s.add_dependency('trollop', '~> 1.16.2')
-  s.add_dependency('net-scp', '~> 1.0.4')
-  s.add_dependency('net-ssh', '~> 2.1.4')
-  s.add_dependency('net-ssh-gateway', '~> 1.1.0')
-  s.add_dependency('net-ssh-multi', '~> 1.1')
+  s.add_dependency('net-scp')
+  s.add_dependency('net-ssh')
+  s.add_dependency('net-ssh-gateway')
+  s.add_dependency('net-ssh-multi')
   s.add_dependency('ncurses', '~> 0.9.1')
 end
  
