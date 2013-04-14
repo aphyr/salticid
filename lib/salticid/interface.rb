@@ -119,9 +119,9 @@ class Salticid
 
           # Do stuff
           case char
-          when ?\t
+          when 9 # tab
             @tabs.scroll
-          when ?q
+          when 113 # q
             shutdown
           when Ncurses::KEY_LEFT
             @tabs.scroll -1
