@@ -1,4 +1,4 @@
-#!/usr/bin/env ruby1.8
+#!/usr/bin/env ruby
 
 require 'rubygems'
 require 'trollop'
@@ -37,7 +37,7 @@ hosts.flatten!.uniq!
 
 # If no hosts were given, we may infer them from the task.
 if hosts.empty?
-  hosts |= @h.hosts_for(task) rescue nil
+  hosts |= @h.hosts_for(task) rescue []
 end
 
 # Show info
@@ -79,7 +79,7 @@ begin
         end
 
         # Run task
-        host.instance_eval task if task
+        host.instance_eval(task, "command line") if task
        
         host.log :finished, "Finished."
       rescue => e

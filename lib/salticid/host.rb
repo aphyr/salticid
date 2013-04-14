@@ -163,7 +163,9 @@ class Salticid::Host
     # If applicable, wrap the command in a sudo subshell...
     if @sudo
       command = "sudo -S -u #{@sudo} bash -c #{escape(command)}"
-      opts[:stdin] = @password + "\n" + opts[:stdin].to_s
+      if @password
+        opts[:stdin] = @password + "\n" + opts[:stdin].to_s
+      end
     end
 
     buffer = ''
