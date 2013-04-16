@@ -104,7 +104,7 @@ class Salticid::Host
   # Quotes a string for inclusion in a bash command line
   def escape(string)
     return '' if string.nil?
-    return string unless string.to_s =~ /[\\\$`" ]/
+    return string unless string.to_s =~ /[\\\$`" \(\)\{\}\[\]]/
     '"' + string.to_s.gsub(/[\\\$`"]/) { |match| '\\' + match } + '"'
   end
   
