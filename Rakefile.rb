@@ -1,10 +1,9 @@
 $:.unshift(File.join(File.dirname(__FILE__), 'lib'))
 
 require 'rubygems'
-require 'rake/gempackagetask'
-require 'rake/rdoctask'
 require 'salticid/version'
 require 'find'
+require 'rubygems/package_task'
  
 # Don't include resource forks in tarballs on Mac OS X.
 ENV['COPY_EXTENDED_ATTRIBUTES_DISABLE'] = 'true'
@@ -34,20 +33,6 @@ gemspec = Gem::Specification.new do |s|
   s.add_dependency('net-ssh-multi')
   s.add_dependency('ncurses', '~> 0.9.1')
 end
- 
-Rake::GemPackageTask.new(gemspec) do |p|
-  p.need_tar_gz = true
-end
- 
-Rake::RDocTask.new do |rd|
-  rd.main = 'Risky'
-  rd.title = 'Risky'
-  rd.rdoc_dir = 'doc'
- 
-  rd.rdoc_files.include('lib/**/*.rb')
-end
- 
-desc "install Risky"
-task :install => :gem do
-  sh "gem install #{File.dirname(__FILE__)}/pkg/risky-#{Risky::VERSION}.gem"
+
+Gem::PackageTask.new(gemspec) do |pkg|
 end
