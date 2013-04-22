@@ -20,7 +20,7 @@ gemspec = Gem::Specification.new do |s|
   s.summary = 'Run commands over SSH, with Ruby magic.'
  
   s.files = FileList['{lib}/**/*', 'LICENSE', 'README.markdown'].to_a
-  s.executables = []
+  s.executables = ['salticid']
   s.require_path = 'lib'
   s.has_rdoc = true
  
@@ -31,7 +31,6 @@ gemspec = Gem::Specification.new do |s|
   s.add_dependency('net-ssh')
   s.add_dependency('net-ssh-gateway')
   s.add_dependency('net-ssh-multi')
-  s.add_dependency('ncurses', '~> 0.9.1')
 end
 
 Gem::PackageTask.new(gemspec) do |pkg|
