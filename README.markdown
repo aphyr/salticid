@@ -6,6 +6,8 @@ Salticid
 Salticidae is the family of jumping spiders: small, nimble, and quite
 intelligent within a limited domain.
 
+<img src="http://aphyr.com/media/salticid.png" width="100%" alt="Salticid installing riak" />
+
 Salticid runs commands on other computers via SSH, with just enough
 programmability and structure to run small-scale (~10-20 nodes in parallel)
 deployments. It relies on horrifyingly evil ruby metaprogramming to provide a
@@ -27,7 +29,7 @@ end
 ```
 
 ```sh
-salticid -l example.rb -h my_machine hi
+salticid -l example.rb -h my_machine hello
 ```
 
 Salticid will ssh to my_machine (you'll want your SSH agent to have your
