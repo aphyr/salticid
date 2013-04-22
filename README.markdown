@@ -340,7 +340,7 @@ the full interface:
 
 ```ruby
 task :console do
-  Hydra::Interface.shutdown false
+  Salticid::Interface.shutdown false
 
   if tunnel
     tunnel.open(name, 22) do |port|
@@ -352,7 +352,7 @@ task :console do
 end
 ```
 
-Now `hydra -h my.host.com console` will drop you into an SSH console on that
+Now `salticid -h my.host.com console` will drop you into an SSH console on that
 node.
 
 History
