@@ -267,7 +267,7 @@ salticid riak.deploy
 Salticid parallelizes across hosts. Use the left and right arrow keys, or tab,
 to switch between hosts in the ncurses interface.
 
-Typically you'll use salticid with a common set of files over and over again, instead of loading files explicitly with `-l`. You can put any commands to source in `~/.salticidrc`; they'll be evaluated on the top-level salticid context:
+Typically you'll use salticid with a common set of files over and over again, instead of loading files explicitly with `-l`. You can put any commands to source in `~/.salticidrc` (or .salticidrc in the current working directory); they'll be evaluated on the top-level salticid context:
 
 ```ruby
 load ENV['HOME'] + '/my-deploy/salticid/*.rb'
