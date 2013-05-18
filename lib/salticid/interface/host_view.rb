@@ -74,18 +74,18 @@ class Salticid
               # Put top line
               @window.move lines_left, 0
               @window.addstr time + ' '
-              @window.attron Ncurses::A_BOLD
+              @window.attron Curses::A_BOLD
               @window.attron color if color
               @window.addstr line
             else
               # Put hanging line
-              @window.attron Ncurses::A_BOLD
+              @window.attron Curses::A_BOLD
               @window.attron color if color
               @window.move lines_left, offset
               @window.addstr line
             end
             @window.attroff color if color
-            @window.attroff Ncurses::A_BOLD
+            @window.attroff Curses::A_BOLD
 
             unless @window.cursor[1] == 0
               # Clear rest of line
