@@ -8,14 +8,17 @@ require 'salticid/interface'
 rcfiles = [File.join(ENV["HOME"], '.salticidrc'), ".salticidrc"].select do |f|
   File.exist? f
 end
+# NB: Trollop seems to turn the :multi into a boolean if it's empty (shrug)
+rcfiles = [File.join(ENV["HOME"], '.salticidrc')] if rcfiles.empty?
 
 opts = Trollop::options do
-  opt :exec, 'A command line to execute.', :type => :string
-  opt :group, 'One or more groups to run task on', :type => :string, :multi => true
-  opt :host, 'One or more hosts to run task on', :type => :string, :multi => true
-  opt :load, 'Files to load', :default => rcfiles, :multi => true
-  opt :role, 'One or more roles. Every host in the role will have the specified task run.', :type => :string, :multi => true
-  opt :show, 'Show roles, tasks, hosts, and groups. Try --show salticid or --show <host>', :type => :string
+  opt :exec,    'A command line to execute.', :type => :string
+  opt :group,   'One or more groups to run task on', :type => :string, :multi => true
+  opt :host,    'One or more hosts to run task on', :type => :string, :multi => true
+  opt :load,    'Files to load', :default => rcfiles, :multi => true
+  opt :role,    'One or more roles. Every host in the role will have the specified task run.', :type => :string, :multi => true
+  opt :show,    'Show roles, tasks, hosts, and groups. Try --show salticid or --show <host>', :type => :string
+  opt :explain, 'Show all commands, useful for completion integration.'
 end
 
 task = ARGV.first
@@ -24,6 +27,10 @@ STDOUT.sync = true
 @h = Salticid.new
 
 # Load files
+if !opts[:load] || opts[:load].empty?
+  Trollop::die 'No salticidrc files found, nothing to do'
+end
+
 opts[:load].each do |file|
   @h.load file
 end
@@ -42,6 +49,16 @@ hosts.flatten!.uniq!
 # If no hosts were given, we may infer them from the task.
 if hosts.empty?
   hosts |= @h.hosts_for(task) rescue []
+end
+
+if opts[:explain]
+  @h.roles.each do |role|
+    role.tasks.each do |task|
+      puts "#{role}.#{task.name}"
+    end
+  end
+
+  exit 0
 end
 
 # Show info
