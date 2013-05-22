@@ -1,18 +1,17 @@
 class Salticid
   class Interface
-    require 'ncurses'
-    require 'salticid/interface/ncurses'
+    require 'curses'
     require 'salticid/interface/resizable'
     require 'salticid/interface/view'
     require 'salticid/interface/tab_view'
     require 'salticid/interface/host_view'
 
     COLORS = {
-      :info => Ncurses::COLOR_WHITE,
-      :error => Ncurses::COLOR_RED,
-      :warn => Ncurses::COLOR_YELLOW,
-      :debug => Ncurses::COLOR_CYAN,
-      :finished => Ncurses::COLOR_GREEN
+      :info => Curses::COLOR_WHITE,
+      :error => Curses::COLOR_RED,
+      :warn => Curses::COLOR_YELLOW,
+      :debug => Curses::COLOR_CYAN,
+      :finished => Curses::COLOR_GREEN
     }
     COLOR_PAIRS = {}
 
@@ -38,14 +37,13 @@ class Salticid
       self.class.interfaces << self
 
       # Set up ncurses
-      Ncurses.initscr
-      Ncurses.cbreak
-      Ncurses.noecho
-      Ncurses.nonl
-      Ncurses.stdscr.intrflush false
-      Ncurses.stdscr.keypad true
-      Ncurses.start_color
-      Ncurses.use_default_colors
+      Curses.init_screen
+      Curses.cbreak
+      Curses.noecho
+      Curses.nonl
+      Curses.stdscr.keypad true
+      Curses.start_color
+      Curses.use_default_colors
 
       @salticid = salticid
       @hosts = []
@@ -67,7 +65,7 @@ class Salticid
         self,
         :host => host,
         :top => 1,
-        :height => Ncurses.LINES - 1
+        :height => Curses.LINES - 1
       )
       hv.on_state_change do |state|
         @tabs.render
@@ -78,8 +76,8 @@ class Salticid
 
     def colorize
       COLORS.each_with_index do |c, i|
-        Ncurses.init_pair i + 1, c.last, -1
-        COLOR_PAIRS[c.first] = Ncurses.COLOR_PAIR(i + 1)
+        Curses.init_pair i + 1, c.last, -1
+        COLOR_PAIRS[c.first] = Curses.color_pair(i + 1)
       end
     end
 
@@ -123,17 +121,17 @@ class Salticid
             @tabs.scroll
           when 113 # q
             shutdown
-          when Ncurses::KEY_LEFT
+          when Curses::KEY_LEFT
             @tabs.scroll -1
-          when Ncurses::KEY_RIGHT
+          when Curses::KEY_RIGHT
             @tabs.scroll 1
-          when Ncurses::KEY_PPAGE
+          when Curses::KEY_PPAGE
             tab.scroll -tab.height / 2
-          when Ncurses::KEY_NPAGE
+          when Curses::KEY_NPAGE
             tab.scroll tab.height / 2
-          when Ncurses::KEY_UP
+          when Curses::KEY_UP
             tab.scroll -1 
-          when Ncurses::KEY_DOWN
+          when Curses::KEY_DOWN
             tab.scroll 1
           end
         end
@@ -143,10 +141,10 @@ class Salticid
     # Resize to fit display
     def resize
       # We need to nuke ncurses to pick up the new dimensions
-      Ncurses.def_prog_mode
-      Ncurses.endwin
-      Ncurses.reset_prog_mode
-      height, width = Ncurses.dimensions
+      Curses.def_prog_mode
+      Curses.endwin
+      Curses.reset_prog_mode
+      height, width = Curses.dimensions
    
       # Resize tabs 
       @tabs.resize(
@@ -162,10 +160,10 @@ class Salticid
       @tabs.shutdown
      
       # Shut down ncurses
-      Ncurses.echo
-      Ncurses.nocbreak
-      Ncurses.nl
-      Ncurses.endwin
+      Curses.echo
+      Curses.nocbreak
+      Curses.nl
+      Curses.endwin
 
       # Stop interface
       @main.exit rescue nil
