@@ -4,7 +4,7 @@ _salticid_complete() {
 
   COMPREPLY=()
   cur=${COMP_WORDS[COMP_CWORD]}
-  goals="$(salticid -x)"
+  goals="$(salticid --show all-tasks)"
   cur=`echo $cur | sed 's/\\\\//g'`
   COMPREPLY=($(compgen -W "${goals}" "${cur}" | sed 's/\\\\//g') )
 }

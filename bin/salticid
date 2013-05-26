@@ -18,7 +18,6 @@ opts = Trollop::options do
   opt :load,    'Files to load', :default => rcfiles, :multi => true
   opt :role,    'One or more roles. Every host in the role will have the specified task run.', :type => :string, :multi => true
   opt :show,    'Show roles, tasks, hosts, and groups. Try --show salticid or --show <host>', :type => :string
-  opt :explain, 'Show all commands, useful for completion integration.'
 end
 
 task = ARGV.first
@@ -51,21 +50,17 @@ if hosts.empty?
   hosts |= @h.hosts_for(task) rescue []
 end
 
-if opts[:explain]
-  @h.roles.each do |role|
-    role.tasks.each do |task|
-      puts "#{role}.#{task.name}"
-    end
-  end
-
-  exit 0
-end
-
 # Show info
 if opts[:show]
   case opts[:show]
   when 'salticid'
     puts @h.to_string
+  when 'all-tasks'
+    @h.roles.each do |role|
+      role.tasks.each do |task|
+        puts "#{role}.#{task.name}"
+      end
+    end
   else
     begin
       o = @h.send(opts[:show].to_sym)
