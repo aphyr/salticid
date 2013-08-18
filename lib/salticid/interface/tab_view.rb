@@ -70,16 +70,16 @@ class Salticid
 
         @tabs.each_with_index do |tab, i|
           if i > 0
-            @window.addch Curses::ACS_VLINE
+            @window.addch Ncurses::ACS_VLINE
           end
 
           color = Interface::COLOR_PAIRS[tab.state]
           @window.attron color if color
-          @window.attron Curses::A_BOLD
-          @window.attron Curses::A_REVERSE if i == @active
+          @window.attron Ncurses::A_BOLD
+          @window.attron Ncurses::A_REVERSE if i == @active
           @window.addstr tab.to_s.slice(0,regions[i]).center(regions[i])
-          @window.attroff Curses::A_REVERSE if i == @active
-          @window.attroff Curses::A_BOLD
+          @window.attroff Ncurses::A_REVERSE if i == @active
+          @window.attroff Ncurses::A_BOLD
           @window.attroff color if color
         end
 

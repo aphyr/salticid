@@ -7,13 +7,13 @@ module IRC
       attr_accessor :messages, :window
 
       COLORS = [
-        Curses::COLOR_WHITE,
-        Curses::COLOR_RED,
-        Curses::COLOR_GREEN,
-        Curses::COLOR_YELLOW,
-        Curses::COLOR_BLUE,
-        Curses::COLOR_MAGENTA,
-        Curses::COLOR_CYAN
+        Ncurses::COLOR_WHITE,
+        Ncurses::COLOR_RED,
+        Ncurses::COLOR_GREEN,
+        Ncurses::COLOR_YELLOW,
+        Ncurses::COLOR_BLUE,
+        Ncurses::COLOR_MAGENTA,
+        Ncurses::COLOR_CYAN
       ] 
 
       def initialize(interface, params = {})
@@ -27,7 +27,7 @@ module IRC
 
         @color_map = Hash.new do |hash, key|
           if key
-            hash[key] = @color_index.modulo Curses.color_pairs
+            hash[key] = @color_index.modulo Ncurses.COLOR_PAIRS
             @color_index += 1
           else
             nil
@@ -53,7 +53,7 @@ module IRC
       # Set up colors
       def colorize
         COLORS.each_with_index do |color, i|
-          Curses.init_pair i, color, Curses::COLOR_BLACK
+          Ncurses.init_pair i, color, Ncurses::COLOR_BLACK
         end
       end
 
@@ -78,7 +78,7 @@ module IRC
 
           case message
           when PrivMsg
-            color = Curses.color_pair(@color_map[message.user.nick])
+            color = Ncurses.COLOR_PAIR(@color_map[message.user.nick])
             user = message.user.to_s || ''
             text = message.text
           when Event
@@ -112,11 +112,11 @@ module IRC
               # Put top line
               @window.move lines_left, 0
               @window.addstr time + ' '
-              @window.attron Curses::A_BOLD
+              @window.attron Ncurses::A_BOLD
               @window.attron color if color
               @window.addstr user
               @window.attroff color if color
-              @window.attroff Curses::A_BOLD
+              @window.attroff Ncurses::A_BOLD
               @window.addstr ': '
               @window.addstr line
             else
