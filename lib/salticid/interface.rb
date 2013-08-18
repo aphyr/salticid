@@ -163,7 +163,7 @@ class Salticid
       Curses.echo
       Curses.nocbreak
       Curses.nl
-      Curses.close_screen
+      Curses.endwin
 
       # Stop interface
       @main.exit rescue nil
