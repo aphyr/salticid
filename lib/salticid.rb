@@ -2,6 +2,7 @@ require 'rubygems'
 require 'net/ssh'
 require 'net/scp'
 require 'net/ssh/gateway'
+require 'thread'
 
 $LOAD_PATH.unshift(File.dirname(__FILE__))
 
@@ -25,7 +26,7 @@ class Salticid
   require 'salticid/gateway'
   require 'salticid/group'
 
-  attr_accessor :gw, :groups, :hosts, :roles, :tasks
+  attr_accessor :gw, :groups, :hosts, :roles, :tasks, :mutex
 
   def initialize
     @gw = nil
@@ -33,6 +34,7 @@ class Salticid
     @groups = []
     @roles = []
     @tasks = []
+    @mutex = Mutex.new
   end
 
   # Define a gateway.
