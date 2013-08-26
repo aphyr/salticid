@@ -152,7 +152,7 @@ class Salticid::Host
     end
 
     # After command, add a semicolon...
-    unless command =~ /;\s*$/
+    unless command =~ /;\s*\z/
       command += ';'
     end
 
@@ -182,7 +182,7 @@ class Salticid::Host
         # Handle STDOUT
         ch.on_data do |c, data|
           # Could this data be the status code?
-          if pos = (data =~ /(\d{1,3})\n$/)
+          if pos = (data =~ /(\d{1,3})\n\z/)
             # Set status
             status = $1
 
