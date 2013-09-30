@@ -1,7 +1,7 @@
 Salticid
 =====
 
-<a href="http://www.flickr.com/photos/robertwhyte/8034414631/" title="Salticidae Maratus sp. by Robert Whyte www.arachne.org.au, on Flickr"><img src="http://farm9.staticflickr.com/8034/8034414631_1d7906ac5d_b.jpg" width="850" height="674" alt="Salticidae Maratus sp."></a>
+<a href="http://www.flickr.com/photos/robertwhyte/8034414631/" title="Salticidae Maratus sp. by Robert Whyte www.arachne.org.au, on Flickr"><img src="http://farm9.staticflickr.com/8034/8034414631_1d7906ac5d_b.jpg" width="722" height="577" alt="Salticidae Maratus sp."></a>
 
 Salticidae is the family of jumping spiders: small, nimble, and quite
 intelligent within a limited domain.
