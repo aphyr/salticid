@@ -1,12 +1,11 @@
 Salticid
 =====
 
-<a href="http://www.flickr.com/photos/robertwhyte/8034414631/" title="Salticidae Maratus sp. by Robert Whyte www.arachne.org.au, on Flickr"><img src="http://farm9.staticflickr.com/8034/8034414631_1d7906ac5d_b.jpg" width="722" height="577" alt="Salticidae Maratus sp."></a>
-
 Salticidae is the family of jumping spiders: small, nimble, and quite
 intelligent within a limited domain.
 
-<img src="http://aphyr.com/media/salticid.png" width="100%" alt="Salticid installing riak" />
+<a style="display: inline-block" href="http://www.flickr.com/photos/robertwhyte/8034414631/" title="Salticidae Maratus sp. by Robert Whyte www.arachne.org.au, on Flickr"><img src="http://farm9.staticflickr.com/8034/8034414631_1d7906ac5d_b.jpg" width="302px" height="240px" alt="Salticidae Maratus sp."></a> <img src="http://aphyr.com/media/salticid.png" style="display: inline-block;" width="409px" height="240px" alt="Salticid installing riak" />
+
 
 Salticid runs commands on other computers via SSH, with just enough
 programmability and structure to run small-scale (~10-20 nodes in parallel)
