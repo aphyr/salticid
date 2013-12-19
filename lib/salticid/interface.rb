@@ -99,11 +99,6 @@ class Salticid
       @main.join
     end
 
-    # List channels and topics
-    def list(*channels)
-      @connection.list *channels
-    end
-
     # Mainloop
     def main
       @main = Thread.new do
