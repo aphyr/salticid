@@ -12,7 +12,7 @@ class Salticid
 
           if @window
             # Resize window
-            @window.mvwin @top, @left
+            @window.move @top, @left
             @window.resize @height, @width
           end
 

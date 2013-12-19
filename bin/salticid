@@ -111,6 +111,6 @@ begin
   # When the interface exits, wait for each thread to complete work.
   threads.each { |t| t.join rescue nil }
 rescue => e
-  interface.shutdown
+  interface.shutdown false rescue nil
   raise e
 end

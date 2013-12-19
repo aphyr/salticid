@@ -1,13 +1,10 @@
-module Ncurses
+module Curses
   # Returns size of screen [y, x]
   def self.dimensions
-    x = Array.new
-    y = Array.new
-    Ncurses.getmaxyx(Ncurses.stdscr, y, x)
-    [y.first, x.first]
+    [Curses.stdscr.maxy, Curses.stdscr.maxx]
   end
 
-  class WINDOW
+  class Window
     # Adds a FormattedString
     def add_formatted_string(string)
       string.each do |part|
@@ -21,10 +18,7 @@ module Ncurses
 
     # Returns cursor y and x coordinates.
     def cursor
-      y = Array.new
-      x = Array.new
-      getyx y, x
-      [y.first, x.first]
+      [cury, curx]
     end
   end
 end

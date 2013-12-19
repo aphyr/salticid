@@ -7,12 +7,12 @@ class Salticid
 
       def initialize(interface, params = {})
         @interface = interface
-        @height = params[:height] || Ncurses.LINES
-        @width = params[:width] || Ncurses.COLS
+        @height = params[:height] || Curses.lines
+        @width = params[:width] || Curses.cols
         @top = params[:top] || 0
         @left = params[:left] || 0
 
-        @window = Ncurses::WINDOW.new @height, @width, @top, @left
+        @window = Curses::Window.new @height, @width, @top, @left
       end
 
       def height=(height)
@@ -22,7 +22,7 @@ class Salticid
 
       def hide
         @hidden = true
-        @window.erase
+        @window.clear
       end
 
       def left=(left)
