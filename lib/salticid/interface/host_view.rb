@@ -75,7 +75,7 @@ class Salticid
               @window.setpos lines_left, 0
               @window.addstr time + ' '
               @window.attron Curses::A_BOLD
-              @window.attron color if color
+              @window.color_set color if color
               @window.addstr line
             else
               # Put hanging line
@@ -84,7 +84,7 @@ class Salticid
               @window.setpos lines_left, offset
               @window.addstr line
             end
-            @window.attroff color if color
+            @window.color_set Interface::COLOR_PAIRS[:info] if color
             @window.attroff Curses::A_BOLD
 
             unless @window.cursor[1] == 0

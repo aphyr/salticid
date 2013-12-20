@@ -78,10 +78,12 @@ class Salticid
       tab.show
     end
 
+    # Set up colors
     def colorize
       COLORS.each_with_index do |c, i|
-        Curses.init_pair i + 1, c.last, -1
-        COLOR_PAIRS[c.first] = Curses.color_pairs[i + 1]
+        pair_num = i + 1
+        Curses.init_pair pair_num, c.last, -1
+        COLOR_PAIRS[c.first] = pair_num
       end
     end
 
