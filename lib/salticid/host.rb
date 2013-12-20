@@ -224,7 +224,7 @@ class Salticid::Host
 
             # Play forward any unwritten lines
             if opts[:echo] and stderr_echoed < stderr.length
-              stderr[echoed..-1].split("\n")[0..-2].each do |fragment|
+              stderr[stderr_echoed..-1].split("\n")[0..-2].each do |fragment|
                 stderr_echoed += fragment.length + 1
                 log :stderr, fragment
               end
