@@ -12,6 +12,7 @@ class Salticid
       :error => Curses::COLOR_RED,
       :warn => Curses::COLOR_YELLOW,
       :debug => Curses::COLOR_CYAN,
+      :stderr => Curses::COLOR_MAGENTA,
       :finished => Curses::COLOR_GREEN
     }
     COLOR_PAIRS = {}
