@@ -170,6 +170,7 @@ class Salticid::Host
 
     buffer = ''
     echoed = 0
+    stderr_echoed = 0
     status = nil
     written = false
 
@@ -213,11 +214,21 @@ class Salticid::Host
 
         # Handle STDERR
         ch.on_extended_data do |c, type, data|
+          # STDERR
           if type == 1
-            # STDERR
+            # Callback
             opts[:stderr].call(data) if opts[:stderr]
+
+            # Accrue in stderr string
             stderr << data
-            log :stderr, stderr if opts[:echo]
+
+            # Play forward any unwritten lines
+            if opts[:echo] and stderr_echoed < stderr.length
+              stderr[echoed..-1].split("\n")[0..-2].each do |fragment|
+                stderr_echoed += fragment.length + 1
+                log :stderr, fragment
+              end
+            end
           end
         end
         
@@ -243,6 +254,12 @@ class Salticid::Host
             stdout[echoed..-1].split("\n").each do |fragment|
               echoed += fragment.length + 1
               log fragment
+            end
+
+            # Last of stderr
+            stderr[stderr_echoed..-1].split("\n").each do |fragment|
+              echoed += fragment.length + 1
+              log :stderr, fragment
             end
           end
         end
