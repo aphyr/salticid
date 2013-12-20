@@ -80,7 +80,7 @@ class Salticid
             else
               # Put hanging line
               @window.attron Curses::A_BOLD
-              @window.attron color if color
+              @window.color_set color if color
               @window.setpos lines_left, offset
               @window.addstr line
             end
