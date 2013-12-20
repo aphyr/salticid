@@ -117,11 +117,15 @@ class Salticid
             next
           end
 
+          File.open("/tmp/curses.log", "a") { |f|
+            f.puts char.inspect
+          }
+
           # Do stuff
           case char
           when 9 # tab
             @tabs.scroll
-          when 113 # q
+          when "q" # q
             shutdown
           when Curses::KEY_LEFT
             @tabs.scroll -1
