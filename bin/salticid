@@ -79,6 +79,22 @@ end
 
 Trollop::die 'Nothing to do' if task.nil? and opts[:exec].nil?
 
+# SSH
+# Hey let's just pile hacks on top of hacks here, I'm sure nobody will be
+# confused by it
+if task == 'ssh'
+  # Construct SSH-friendly identifiers
+  hosts = hosts.map do |host|
+    "#{host.user}@#{host.name}"
+  end
+
+  if hosts.count == 1
+    exec 'ssh', hosts.first
+  else
+    exec 'cssh', *hosts
+  end
+end
+
 # Run commands on the hosts
 Thread.abort_on_exception = true
 interface = Salticid::Interface.new @h
