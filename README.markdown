@@ -278,8 +278,8 @@ expansion.
 An example
 ---
 
-Take a look at Jepsen's salticid config:
-https://github.com/aphyr/jepsen/blob/master/salticid/main.rb
+Take a look at Jepsen's, old salticid config:
+https://github.com/aphyr/jepsen/blob/old/salticid/main.rb
 
 Caveats
 ---
