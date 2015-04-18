@@ -108,6 +108,7 @@ class Salticid
         Thread.current.priority = -1
         main_thread = Thread.current
         trap("WINCH") { resize if main_thread.alive? }
+        trap("SIGINT") { exit }
 
         loop do
           # Get character
