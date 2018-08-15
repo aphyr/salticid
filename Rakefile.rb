@@ -29,6 +29,7 @@ gemspec = Gem::Specification.new do |s|
   s.add_dependency('trollop', '~> 1.16.2')
   s.add_dependency('net-scp')
   s.add_dependency('net-ssh')
+  s.add_dependency('curses')
   s.add_dependency('net-ssh-gateway')
   s.add_dependency('net-ssh-multi')
 end
